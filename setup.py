@@ -44,6 +44,7 @@ setup(name='qtp-target-gene',
                                         'tests/test_data/*']},
       scripts=glob('scripts/*'),
       extras_require={'test': ["nose >= 0.10.1", "pep8"]},
-      install_requires=['click >= 3.3', 'h5py >= 2.3.1'],
+      install_requires=['click >= 3.3', 'h5py >= 2.3.1', 'matplotlib',
+                        'scikit-bio==0.2.3'],
       classifiers=classifiers
       )

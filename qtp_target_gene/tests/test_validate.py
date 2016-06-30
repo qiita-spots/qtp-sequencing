@@ -17,7 +17,7 @@ from qiita_client import QiitaClient
 from h5py import File
 from qiita_ware.demux import to_hdf5
 
-from target_gene_type.validate import (
+from qtp_target_gene.validate import (
     _validate_multiple, _validate_per_sample_FASTQ, _validate_demux_file,
     _validate_demultiplexed, validate)
 

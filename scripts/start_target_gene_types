@@ -10,7 +10,7 @@
 
 import click
 
-from target_gene_type.plugin import execute_job
+from qtp_target_gene.plugin import execute_job
 
 
 @click.command()
