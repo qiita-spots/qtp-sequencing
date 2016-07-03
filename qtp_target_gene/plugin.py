@@ -14,8 +14,8 @@ import sys
 
 from qiita_client import QiitaClient
 
-from target_gene_type.validate import validate
-from target_gene_type.summary import generate_html_summary
+from qtp_target_gene.validate import validate
+from qtp_target_gene.summary import generate_html_summary
 
 with standard_library.hooks():
     from configparser import ConfigParser
