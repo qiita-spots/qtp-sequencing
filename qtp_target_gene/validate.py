@@ -12,6 +12,7 @@ from shutil import copy
 
 from h5py import File
 from skbio.parse.sequences import load
+from qiita_client import ArtifactInfo
 
 # This is temporary. We should move the demux file format somewhere else
 # (Jose) I'm planning to do this soon
@@ -114,8 +115,11 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype):
         return False, None, error_msg
 
     # Everything is ok
-    filepaths = [[fps, fps_type] for fps_type, fps in files.items()]
-    return True, [[None, atype, filepaths]], ""
+    filepaths = []
+    for fps_type, fps in files.items():
+        filepaths.extend([(fp, fps_type) for fp in fps])
+
+    return True, [ArtifactInfo(None, atype, filepaths)], ""
 
 
 def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
@@ -213,8 +217,10 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
         error_msg = error_msg % (', '.join(fwd_fail), ', '.join(rev_fail))
         return False, None, error_msg
 
-    filepaths = [[fps, fps_type] for fps_type, fps in files.items()]
-    return True, [[None, 'per_sample_FASTQ', filepaths]], ""
+    filepaths = []
+    for fps_type, fps in files.items():
+        filepaths.extend([(fp, fps_type) for fp in fps])
+    return True, [ArtifactInfo(None, 'per_sample_FASTQ', filepaths)], ""
 
 
 def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
@@ -315,12 +321,12 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
                 f.write(format_fasta_record(r['SequenceID'], r['Sequence'],
                                             r['Qual']))
 
-    filepaths = [[[fastq_fp], 'preprocessed_fastq'],
-                 [[fasta_fp], 'preprocessed_fasta'],
-                 [[demux_fp], 'preprocessed_demux']]
+    filepaths = [(fastq_fp, 'preprocessed_fastq'),
+                 (fasta_fp, 'preprocessed_fasta'),
+                 (demux_fp, 'preprocessed_demux')]
     if log_fp:
-        filepaths.append([[log_fp], 'log'])
-    return True, [[None, 'Demultiplexed', filepaths]], ""
+        filepaths.append((log_fp, 'log'))
+    return True, [ArtifactInfo(None, 'Demultiplexed', filepaths)], ""
 
 
 def _validate_demultiplexed(qclient, job_id, prep_info, files, out_dir):
@@ -435,13 +441,6 @@ def validate(qclient, job_id, parameters, out_dir):
 
     qclient.update_job_step(job_id, "Step 1: Collecting prep information")
     prep_info = qclient.get("/qiita_db/prep_template/%s/data/" % prep_id)
-    if not prep_info or not prep_info['success']:
-        error_msg = "Could not get prep information: %s"
-        if prep_info:
-            error_msg = error_msg % prep_info['error']
-        else:
-            error_msg = error_msg % "could not connect with the server"
-        raise ValueError(error_msg)
     prep_info = prep_info['data']
 
     if a_type in ['SFF', 'FASTQ', 'FASTA', 'FASTA_Sanger']:
