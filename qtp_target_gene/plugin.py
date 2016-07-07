@@ -44,11 +44,9 @@ def execute_job(server_url, job_id, output_dir):
         If there is a problem gathering the job information
     """
     # Set up the Qiita Client
-    try:
-        conf_fp = environ['QP_TARGET_GENE_TYPE_CONFIG_FP']
-    except KeyError:
-        conf_fp = join(dirname(abspath(__file__)), 'support_files',
-                       'config_file.cfg')
+    dflt_conf_fp = join(dirname(abspath(__file__)), 'support_files',
+                        'config_file.cfg')
+    conf_fp = environ.get('QTP_TARGET_GENE_CONFIG_FP', dflt_conf_fp)
     config = ConfigParser()
     with open(conf_fp, 'U') as conf_file:
         config.readfp(conf_file)
