@@ -6,14 +6,15 @@
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
 
-from unittest import TestCase, main
+from unittest import main
 from tempfile import mkdtemp, mkstemp
-from os import remove, close, environ
+from os import remove, close
 from os.path import exists, isdir, basename, splitext, join
 from shutil import rmtree
 from json import dumps
 
-from qiita_client import QiitaClient, ArtifactInfo
+from qiita_client import ArtifactInfo
+from qiita_client.testing import PluginTestCase
 from h5py import File
 from qiita_ware.demux import to_hdf5
 
@@ -22,22 +23,7 @@ from qtp_target_gene.validate import (
     _validate_demultiplexed, validate)
 
 
-CLIENT_ID = '19ndkO3oMKsoChjVVWluF7QkxHRfYhTKSFbAVt8IhK7gZgDaO4'
-CLIENT_SECRET = ('J7FfQ7CQdOxuKhQAf1eoGgBAE81Ns8Gu3EKaWFm3IO2JKh'
-                 'AmmCWZuabe0O5Mp28s1')
-
-
-class ValidateTests(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        server_cert = environ.get('QIITA_SERVER_CERT', None)
-        cls.qclient = QiitaClient("https://localhost:21174", CLIENT_ID,
-                                  CLIENT_SECRET, server_cert=server_cert)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.qclient.post("/apitest/reset/")
-
+class ValidateTests(PluginTestCase):
     def setUp(self):
         self._clean_up_files = []
 
@@ -60,7 +46,7 @@ class ValidateTests(TestCase):
                       'files': dumps(files),
                       'artifact_type': atype}
 
-        data = {'command': 6,
+        data = {'command': dumps(['Target Gene type', '0.1.0', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
@@ -491,7 +477,7 @@ class ValidateTests(TestCase):
                           {"preprocessed_demux": ["/path/file1.demux"]}),
                       'artifact_type': 'UNKNOWN'}
 
-        data = {'command': 6,
+        data = {'command': dumps(['Target Gene type', '0.1.0', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
