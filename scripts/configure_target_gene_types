@@ -14,12 +14,15 @@ from qtp_target_gene import plugin
 
 
 @click.command()
-@click.argument('url', required=True)
-@click.argument('job_id', required=True)
-@click.argument('output_dir', required=True, type=click.Path(file_okay=False))
-def execute(url, job_id, output_dir):
-    """Executes the task given by job_id and puts the output in output_dir"""
-    plugin(url, job_id, output_dir)
+@click.option('--env-script', prompt='Environment script',
+              default='source activate qtp-target-gene')
+@click.option('--server-cert', prompt='Server certificate', default='None')
+def config(env_script, server_cert):
+    """Generates the Qiita configuration files"""
+    if server_cert == 'None':
+        server_cert = None
+    plugin.generate_config(env_script, 'start_target_gene_types',
+                           server_cert=server_cert)
 
 if __name__ == '__main__':
-    execute()
+    config()

@@ -6,36 +6,21 @@
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
 
-from unittest import TestCase, main
+from unittest import main
 from tempfile import mkdtemp
-from os import remove, environ
+from os import remove
 from os.path import exists, isdir, join, dirname
 from shutil import rmtree, copyfile
 from json import dumps
 
-from qiita_client import QiitaClient
+from qiita_client.testing import PluginTestCase
 from gzip import GzipFile
 
 from qtp_target_gene.summary import (
     generate_html_summary, _summary_demultiplexed, _summary_not_demultiplexed)
 
-CLIENT_ID = '19ndkO3oMKsoChjVVWluF7QkxHRfYhTKSFbAVt8IhK7gZgDaO4'
-CLIENT_SECRET = ('J7FfQ7CQdOxuKhQAf1eoGgBAE81Ns8Gu3EKaWFm3IO2JKh'
-                 'AmmCWZuabe0O5Mp28s1')
 
-
-class SummaryTestsNotDemux(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        server_cert = environ.get('QIITA_SERVER_CERT', None)
-        cls.qclient = QiitaClient("https://localhost:21174", CLIENT_ID,
-                                  CLIENT_SECRET, server_cert=server_cert)
-
-    @classmethod
-    def tearDownClass(cls):
-        # Reset the test database
-        cls.qclient.post("/apitest/reset/")
-
+class SummaryTestsNotDemux(PluginTestCase):
     def setUp(self):
         self.out_dir = mkdtemp()
         self._clean_up_files = [self.out_dir]
@@ -52,7 +37,8 @@ class SummaryTestsNotDemux(TestCase):
         # Create a job in Qiita
         artifact_id = 1
         parameters = {'input_data': artifact_id}
-        data = {'command': 5,
+        data = {'command': dumps(['Target Gene type', '0.1.0',
+                                  'Generate HTML summary']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
@@ -92,7 +78,8 @@ class SummaryTestsNotDemux(TestCase):
     def test_generate_html_summary_demux(self):
         artifact_id = 2
         parameters = {'input_data': artifact_id}
-        data = {'command': 5,
+        data = {'command': dumps(['Target Gene type', '0.1.0',
+                                  'Generate HTML summary']),
                 'parameters': dumps(parameters),
                 'stuatus': 'running'}
         job_id = self.qclient.post(
