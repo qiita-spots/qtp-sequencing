@@ -258,6 +258,146 @@ class SummaryTestsNotDemux(PluginTestCase):
         obs = _summary_demultiplexed(artifact_type, filepaths)
         self.assertIsNone(obs)
 
+    # MultiQC tests
+    def test_generate_multiqc_commands(self):
+
+        exp_cmd = ['multiqc infile.txt --outdir outdir '
+                   '--filename MultiQC.html file_dir']
+
+        obs_cmd = generate_multiqc_commands('file_dir', 'out_dir')
+
+        self.assertEqual(obs_cmd, exp_cmd)
+
+    # FastQC tests
+    def test__guess_fastqc_filename(self):
+        obs = _guess_fastqc_filename('./folder/file1.R1.fastq.gz')
+        exp = ('file1.R1_fastqc.html', 'file1.R1_fastqc.zip')
+
+        self.assertEqual(obs, exp)
+
+    def test_generate_fastqc_commands_fwd_rev(self):
+        fd, fp = mkstemp()
+        close(fd)
+        with open(fp, 'w') as f:
+            f.write(MAPPING_FILE)
+        self._clean_up_files.append(fp)
+
+        exp = ['mkdir -p output/s1; fastqc --outdir "output/s1" --kmers 7 '
+               '--noextract --threads 1 fastq/s1.fastq fastq/s1.R2.fastq',
+               'mkdir -p output/s2; fastqc --outdir "output/s2" --kmers 7 '
+               '--noextract --threads 1 fastq/s2.fastq.gz '
+               'fastq/s2.R2.fastq.gz',
+               'mkdir -p output/s3; fastqc --outdir "output/s3" --kmers 7 '
+               '--noextract --threads 1 fastq/s3.fastq fastq/s3.R2.fastq']
+
+        obs, samp = generate_fastqc_commands(
+            ['fastq/s1.fastq', 'fastq/s2.fastq.gz', 'fastq/s3.fastq'],
+            ['fastq/s1.R2.fastq', 'fastq/s2.R2.fastq.gz', 'fastq/s3.R2.fastq'],
+            fp, 'output', self.params)
+
+        self.assertEqual(obs, exp)
+
+    def test_generate_fastqc_commands_fwd(self):
+        fd, fp = mkstemp()
+        close(fd)
+        with open(fp, 'w') as f:
+            f.write(MAPPING_FILE)
+        self._clean_up_files.append(fp)
+
+        exp = ['mkdir -p output/s1; fastqc --outdir "output/s1" --kmers 7 '
+               '--noextract --threads 1 fastq/s1.fastq',
+               'mkdir -p output/s2; fastqc --outdir "output/s2" --kmers 7 '
+               '--noextract --threads 1 fastq/s2.fastq.gz',
+               'mkdir -p output/s3; fastqc --outdir "output/s3" --kmers 7 '
+               '--noextract --threads 1 fastq/s3.fastq']
+
+        obs, samp = generate_fastqc_commands(
+                ['fastq/s1.fastq', 'fastq/s2.fastq.gz', 'fastq/s3.fastq'], [],
+                fp, 'output', self.params)
+
+        self.assertEqual(obs, exp)
+
+    def test_fastqc(self):
+        # parameters
+        params = {}
+
+        # generating filepaths
+        in_dir = mkdtemp()
+        self._clean_up_files.append(in_dir)
+
+        fp1_1 = join(in_dir, 'kd_test_1_R1.fastq.gz')
+        fp1_2 = join(in_dir, 'kd_test_1_R2.fastq.gz')
+        copyfile('support_files/kd_test_1_R1.fastq.gz', fp1_1)
+        copyfile('support_files/kd_test_1_R2.fastq.gz', fp1_2)
+
+        # inserting new prep template
+        prep_info_dict = {
+            'SKB7.640196': {
+                'run_prefix': 'kd_test_1'}
+        }
+
+        data = {'prep_info': dumps(prep_info_dict),
+                # magic #1 = testing study
+                'study': 1,
+                'data_type': 'Metagenomic'}
+        pid = self.qclient.post('/apitest/prep_template/', data=data)['prep']
+
+        # inserting artifacts
+        data = {
+            'filepaths': dumps([
+                (fp1_1, 'raw_forward_seqs'),
+                (fp1_2, 'raw_reverse_seqs')]),
+            'type': "per_sample_FASTQ",
+            'name': "New test artifact",
+            'prep': pid}
+
+        aid = self.qclient.post('/apitest/artifact/', data=data)['artifact']
+
+        params['input'] = aid
+
+        data = {'user': 'demo@microbio.me',
+                'command': dumps(['Target Gene type', '0.1.0',
+                                  'Generate FastQC summary']),
+                'status': 'running',
+                'parameters': dumps(params)}
+
+        jid = self.qclient.post('/apitest/processing_job/', data=data)['job']
+
+        out_dir = mkdtemp()
+        self._clean_up_files.append(out_dir)
+
+        success, ainfo, msg = fastqc(self.qclient, jid,
+                                     params, out_dir)
+
+        self.assertEqual("", msg)
+        self.assertTrue(success)
+        # we are expecting 16 artifacts per sample eventually
+        # but for now just the four fastqs
+        self.assertEqual(4, len(ainfo))
+
+        obs_fps = []
+        obs_arts = []
+        for a in ainfo:
+            obs_arts.append(a.artifact_type)
+            obs_fps.append(a.files)
+        self.assertEqual({'zip_file', 'html_summary'}, set(obs_arts))
+
+        exp_fps = [[(join(out_dir, 'kd_test_1', 'kd_test_1_R1_fastqc.html'),
+                    'html_summary')],
+                   [(join(out_dir, 'kd_test_1', 'kd_test_1_R1_fastqc.zip'),
+                    'zip_file')],
+                   [(join(out_dir, 'kd_test_1', 'kd_test_1_R2_fastqc.html'),
+                    'html_summary')],
+                   [(join(out_dir, 'kd_test_1', 'kd_test_1_R2_fastqc.zip'),
+                    'zip_file')]]
+
+        self.assertItemsEqual(exp_fps, obs_fps)
+
+        for f_a in exp_fps:
+            assert exists(f_a[0][0])
+
+
+
 READS = """@MISEQ03:123:000000000-A40KM:1:1101:14149:1572 1:N:0:TCCACAGGAGT
 GGGGGGTGCCAGCCGCCGCGGTAATACGGGGGGGGCAAGCGTTGTTCGGAATTACTGGGCGTAAAGGGCTCGTAGGCG\
 GCCCACTAAGTCAGACGTGAAATCCCTCGGCTTAACCGGGGAACTGCGTCTGATACTGGATGGCTTGAGGTTGGGAGA\
