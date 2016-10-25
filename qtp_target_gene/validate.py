@@ -220,6 +220,16 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
     filepaths = []
     for fps_type, fps in files.items():
         filepaths.extend([(fp, fps_type) for fp in fps])
+
+    # Generate FastQC summary files
+    map_file = prep_info['qiime-map']
+
+    qc_success, qc_fps, qc_msg = fastqc(qclient, job_id, map_file, filepaths)
+    if not qc_success:
+        error_msg = ("Fastq Quality Summary failed with message: %s" % qc_msg)
+    else:
+        filepaths.extend(qc_fps)
+
     return True, [ArtifactInfo(None, 'per_sample_FASTQ', filepaths)], ""
 
 
