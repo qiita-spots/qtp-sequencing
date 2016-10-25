@@ -21,8 +21,8 @@ install:
   - pip install sphinx sphinx-bootstrap-theme coveralls ipython[all]==2.4.1 
     multiqc
   # Installing the simplify REST api branch - change once it has been merged to master
-  # - pip install https://github.com/biocore/qiita/archive/master.zip
-  - pip install https://github.com/biocore/qiita/archive/plugin-installation.zip
+  - pip install https://github.com/biocore/qiita/archive/master.zip --process-dependency-links
+  # - pip install https://github.com/biocore/qiita/archive/plugin-installation.zip
   - ipython profile create qiita-general --parallel
   - qiita-env start_cluster qiita-general
   - qiita-env make --no-load-ontologies
