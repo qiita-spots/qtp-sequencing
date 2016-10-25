@@ -15,6 +15,7 @@ from StringIO import StringIO
 
 
 from qiita_ware.demux import stats as demux_stats
+
 import matplotlib.pyplot as plt
 
 
