@@ -10,13 +10,9 @@ from os.path import basename, join, splitext
 from json import loads
 from shutil import copy
 
-from h5py import File
-from skbio.parse.sequences import load
 from qiita_client import ArtifactInfo
-
-# This is temporary. We should move the demux file format somewhere else
-# (Jose) I'm planning to do this soon
-from qiita_ware.demux import to_hdf5, to_ascii, format_fasta_record
+from qiita_files.util import open_file
+from qiita_files.demux import to_hdf5, to_ascii_file
 
 FILEPATH_TYPE_DICT = {
     'SFF': ({'raw_sff'}, set()),
@@ -254,7 +250,7 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
         The results og the job
     """
     pt_sample_ids = set(prep_info)
-    with File(demux_fp) as f:
+    with open_file(demux_fp) as f:
         demux_sample_ids = set(f.keys())
 
     if not pt_sample_ids.issuperset(demux_sample_ids):
@@ -294,7 +290,7 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
         new_demux_fp = join(out_dir, basename(demux_fp))
         copy(demux_fp, new_demux_fp)
         # Need to catch an error
-        with File(new_demux_fp, 'r+') as f:
+        with open_file(new_demux_fp, 'r+') as f:
             for old in f:
                 f.move(old, id_map[old])
 
@@ -309,17 +305,11 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
     name = splitext(basename(demux_fp))[0]
     if not fastq_fp:
         fastq_fp = join(out_dir, "%s.fastq" % name)
-        with open(fastq_fp, 'w') as fq:
-            with File(demux_fp, 'r') as dx:
-                for record in to_ascii(dx):
-                    fq.write(record)
+        to_ascii_file(demux_fp, fastq_fp, out_format='fastq')
 
     if not fasta_fp:
         fasta_fp = join(out_dir, "%s.fasta" % name)
-        with open(fasta_fp, 'w') as f:
-            for r in load(fastq_fp):
-                f.write(format_fasta_record(r['SequenceID'], r['Sequence'],
-                                            r['Qual']))
+        to_ascii_file(demux_fp, fasta_fp, out_format='fasta')
 
     filepaths = [(fastq_fp, 'preprocessed_fastq'),
                  (fasta_fp, 'preprocessed_fasta'),
@@ -388,7 +378,7 @@ def _validate_demultiplexed(qclient, job_id, prep_info, files, out_dir):
     elif fastq:
         # Generate the demux file from the fastq
         demux = join(out_dir, "%s.demux" % splitext(basename(fastq))[0])
-        with File(demux, "w") as f:
+        with open_file(demux, "w") as f:
             to_hdf5(fastq, f)
         # Validate the demux, providing the original fastq
         success, a_info, error_msg = _validate_demux_file(
@@ -397,7 +387,7 @@ def _validate_demultiplexed(qclient, job_id, prep_info, files, out_dir):
     elif fasta:
         # Generate the demux file from the fasta
         demux = join(out_dir, "%s.demux" % splitext(basename(fasta))[0])
-        with File(demux, "w") as f:
+        with open_file(demux, "w") as f:
             to_hdf5(fasta, f)
         # Validate the demux, providing the original fasta
         success, a_info, error_msg = _validate_demux_file(

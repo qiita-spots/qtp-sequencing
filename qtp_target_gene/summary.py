@@ -14,7 +14,7 @@ from base64 import b64encode
 from StringIO import StringIO
 
 
-from qiita_ware.demux import stats as demux_stats
+from qiita_files.demux import stats as demux_stats
 import matplotlib.pyplot as plt
 
 
