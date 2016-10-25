@@ -193,29 +193,7 @@ def _summary_demultiplexed(artifact_type, filepaths):
     return artifact_information
 
 
-def format_fastqc_params(parameters):
-
-    params = []
-
-    for param in sorted(parameters):
-        value = parameters[param]
-
-        if str(value) == 'True':
-            params.append('--%s' % param)
-            continue
-        elif str(value) == 'False':
-            continue
-        elif value:
-            params.append('--%s %s' % (param, value))
-            continue
-
-    param_string = ' '.join(params)
-
-    return(param_string)
-
-
-def generate_fastqc_commands(forward_seqs, reverse_seqs, map_file, out_dir,
-                             parameters):
+def generate_fastqc_commands(forward_seqs, reverse_seqs, map_file, out_dir):
     """Generates the FastQC commands
 
     Parameters
@@ -226,8 +204,6 @@ def generate_fastqc_commands(forward_seqs, reverse_seqs, map_file, out_dir,
         The path to the mapping file
     out_dir : str
         The job output directory
-    parameters : dict
-        The command's parameters, keyed by parameter name
 
     Returns
     -------
@@ -239,6 +215,8 @@ def generate_fastqc_commands(forward_seqs, reverse_seqs, map_file, out_dir,
 
     Notes
     -----
+    This is presently reproducing functionality from the kneaddata pipeline
+    in qp_shotgun. 
     """
 
     samples = make_read_pairs_per_sample(forward_seqs, reverse_seqs, map_file)
@@ -246,19 +224,18 @@ def generate_fastqc_commands(forward_seqs, reverse_seqs, map_file, out_dir,
     cmds = []
     prefixes = []
 
-    param_string = format_fastqc_params(parameters)
     fps = []
     for run_prefix, sample, f_fp, r_fp in samples:
         prefixes.append(run_prefix)
         if r_fp is None:
-            cmds.append('mkdir -p %s; fastqc --outdir "%s" %s %s' %
+            cmds.append('mkdir -p %s; fastqc --outdir "%s" %s' %
                         (join(out_dir, run_prefix), join(out_dir, run_prefix),
-                         param_string, f_fp))
+                         f_fp))
             fps.append((f_fp, None))
         else:
-            cmds.append('mkdir -p %s; fastqc --outdir "%s" %s %s %s' %
+            cmds.append('mkdir -p %s; fastqc --outdir "%s" %s %s' %
                         (join(out_dir, run_prefix), join(out_dir, run_prefix),
-                         param_string, f_fp, r_fp))
+                         f_fp, r_fp))
             fps.append((f_fp, r_fp))
 
     return cmds, samples
@@ -382,16 +359,32 @@ def fastqc(qclient, job_id, parameters, out_dir):
                                                   parameters)
 
     # Execute MultiQC
-    # Step 3 execute FastQC
     msg = "Step 5 of 3: Executing MultiQC job (%d/{0})".format(len(mqc_cmds))
     success, msg = _run_commands(qclient, job_id, mqc_cmds, msg)
     if not success:
         return False, None, msg
 
-    # Compress fastq files
+    # Compress QC files
+    commands = []
+
+    fqc_cmd = "tar -czvf %s %s" % (join(out_dir,'fastqc.tar.gz'), fqc_out_dir)
+    mqc_cmd = "tar -czvf %s %s" % (join(out_dir,'multiqc.tar.gz'), mqc_out_dir)
+
+    msg = "Step 6 of 3: Compressing FastQC and MultiQC output"
+    success, msg = _run_commands(qclient, job_id, commands, msg)
+    if not success:
+        return False, None, msg
     
 
     # Step 4 generating artifacts
-    ainfo = _per_sample_ainfo(out_dir, samples)
+
+    ainfo = []
+
+    ainfo.extend([
+        ArtifactInfo('MultiQC data', 'tgz',
+                     [(join(out_dir,'multiqc.tar.gz'), 'tgz')]),
+        ArtifactInfo('FastQC data', 'tgz',
+                     [(join(out_dir,'fastqc.tar.gz'), 'tgz')])])
+
 
     return True, ainfo, ""

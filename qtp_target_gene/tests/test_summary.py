@@ -373,23 +373,19 @@ class SummaryTestsNotDemux(PluginTestCase):
         self.assertTrue(success)
         # we are expecting 16 artifacts per sample eventually
         # but for now just the four fastqs
-        self.assertEqual(4, len(ainfo))
+        self.assertEqual(2, len(ainfo))
 
         obs_fps = []
         obs_arts = []
         for a in ainfo:
             obs_arts.append(a.artifact_type)
             obs_fps.append(a.files)
-        self.assertEqual({'zip_file', 'html_summary'}, set(obs_arts))
+        self.assertEqual({'tgz'}, set(obs_arts))
 
-        exp_fps = [[(join(out_dir, 'kd_test_1', 'kd_test_1_R1_fastqc.html'),
-                    'html_summary')],
-                   [(join(out_dir, 'kd_test_1', 'kd_test_1_R1_fastqc.zip'),
-                    'zip_file')],
-                   [(join(out_dir, 'kd_test_1', 'kd_test_1_R2_fastqc.html'),
-                    'html_summary')],
-                   [(join(out_dir, 'kd_test_1', 'kd_test_1_R2_fastqc.zip'),
-                    'zip_file')]]
+        exp_fps = [[(join(out_dir, 'multiqc.tar.gz'),
+                    'tgz')],
+                   [(join(out_dir, 'fastqc.tar.gz'),
+                    'tgz')]]
 
         self.assertItemsEqual(exp_fps, obs_fps)
 
