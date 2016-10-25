@@ -6,18 +6,17 @@
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
 
-from unittest import main
-from tempfile import mkdtemp
-from os import remove
-from os.path import exists, isdir, join, dirname
+from tempfile import mkdtemp, mkstemp
+from os import remove, close
+from os.path import exists, isdir, join
 from shutil import rmtree, copyfile
 from json import dumps
 
 from qiita_client.testing import PluginTestCase
-from gzip import GzipFile
 
 from qtp_target_gene.fastqc import (generate_fastqc_commands,
-                   generate_multiqc_commands, _guess_fastqc_filename, fastqc)
+                                    generate_multiqc_commands, fastqc,
+                                    make_read_pairs_per_sample)
 
 
 class SummaryTestsNotDemux(PluginTestCase):
@@ -32,6 +31,123 @@ class SummaryTestsNotDemux(PluginTestCase):
                     rmtree(fp)
                 else:
                     remove(fp)
+
+    def test_make_read_pairs_per_sample_match_fwd_rev(self):
+        fd, fp = mkstemp()
+        close(fd)
+        with open(fp, 'w') as f:
+            f.write(MAPPING_FILE)
+        self._clean_up_files.append(fp)
+
+        fwd_fp = ['./folder/s3_S013_L001_R1.fastq.gz',
+                  './folder/s2_S011_L001_R1.fastq.gz',
+                  './folder/s1_S009_L001_R1.fastq.gz']
+
+        rev_fp = ['./folder/s3_S013_L001_R2.fastq.gz',
+                  './folder/s2_S011_L001_R2.fastq.gz',
+                  './folder/s1_S009_L001_R2.fastq.gz']
+
+        exp = [('s1', 'SKB8.640193', './folder/s1_S009_L001_R1.fastq.gz',
+                './folder/s1_S009_L001_R2.fastq.gz'),
+               ('s2', 'SKD8.640184', './folder/s2_S011_L001_R1.fastq.gz',
+                './folder/s2_S011_L001_R2.fastq.gz'),
+               ('s3', 'SKB7.640196', './folder/s3_S013_L001_R1.fastq.gz',
+                './folder/s3_S013_L001_R2.fastq.gz')]
+
+        obs = make_read_pairs_per_sample(fwd_fp, rev_fp, fp)
+
+        self.assertEqual(obs, exp)
+
+    def test_make_read_pairs_per_sample_match_fwd_only(self):
+        fd, fp = mkstemp()
+        close(fd)
+        with open(fp, 'w') as f:
+            f.write(MAPPING_FILE)
+        self._clean_up_files.append(fp)
+
+        fwd_fp = ['./folder/s3_S013_L001_R1.fastq.gz',
+                  './folder/s2_S011_L001_R1.fastq.gz',
+                  './folder/s1_S009_L001_R1.fastq.gz']
+
+        rev_fp = []
+
+        exp = [('s1', 'SKB8.640193', './folder/s1_S009_L001_R1.fastq.gz',
+                None),
+               ('s2', 'SKD8.640184', './folder/s2_S011_L001_R1.fastq.gz',
+                None),
+               ('s3', 'SKB7.640196', './folder/s3_S013_L001_R1.fastq.gz',
+                None)]
+
+        obs = make_read_pairs_per_sample(fwd_fp, rev_fp, fp)
+
+        self.assertEqual(obs, exp)
+
+    def test_make_read_pairs_per_sample_match_fwd_rev_diffnum(self):
+        fd, fp = mkstemp()
+        close(fd)
+        with open(fp, 'w') as f:
+            f.write(MAPPING_FILE)
+        self._clean_up_files.append(fp)
+
+        fwd_fp = ['./folder/s3_S013_L001_R1.fastq.gz',
+                  './folder/s2_S011_L001_R1.fastq.gz',
+                  './folder/s1_S009_L001_R1.fastq.gz']
+
+        rev_fp = ['./folder/s4_S013_L001_R2.fastq.gz',
+                  './folder/s2_S011_L001_R2.fastq.gz',
+                  './folder/s1_S009_L001_R2.fastq.gz']
+
+        with self.assertRaises(ValueError):
+            make_read_pairs_per_sample(fwd_fp, rev_fp, fp)
+
+    def test_make_read_pairs_per_sample_match_fwd_rev_notmatch(self):
+        fd, fp = mkstemp()
+        close(fd)
+        with open(fp, 'w') as f:
+            f.write(MAPPING_FILE)
+        self._clean_up_files.append(fp)
+
+        fwd_fp = ['./folder/s3_S013_L001_R1.fastq.gz',
+                  './folder/s2_S011_L001_R1.fastq.gz',
+                  './folder/s1_S009_L001_R1.fastq.gz']
+
+        rev_fp = ['./folder/s3_S013_L001_R2.fastq.gz',
+                  './folder/s2_S011_L001_R2.fastq.gz']
+
+        with self.assertRaises(ValueError):
+            make_read_pairs_per_sample(fwd_fp, rev_fp, fp)
+
+    def test_make_read_pairs_per_sample_match_fwd_no_rp(self):
+        fd, fp = mkstemp()
+        close(fd)
+        with open(fp, 'w') as f:
+            f.write(MAPPING_FILE)
+        self._clean_up_files.append(fp)
+
+        fwd_fp = ['./folder/s3_S013_L001_R1.fastq.gz',
+                  './folder/s2_S011_L001_R1.fastq.gz',
+                  './folder/s4_S009_L001_R1.fastq.gz']
+
+        rev_fp = []
+
+        with self.assertRaises(ValueError):
+            make_read_pairs_per_sample(fwd_fp, rev_fp, fp)
+
+    def test_make_read_pairs_per_sample_match_fwd_2match(self):
+        fd, fp = mkstemp()
+        close(fd)
+        with open(fp, 'w') as f:
+            f.write(MAPPING_FILE)
+        self._clean_up_files.append(fp)
+
+        fwd_fp = ['./folder/s3_S013_L001_R1.fastq.gz',
+                  './folder/s2_S011_L001_R1.fastq.gz',
+                  './folder/s2_S009_L001_R1.fastq.gz']
+
+        rev_fp = []
+
+        with self.assertRaises(ValueError):
+            make_read_pairs_per_sample(fwd_fp, rev_fp, fp)
 
     # MultiQC tests
     def test_generate_multiqc_commands(self):
@@ -102,18 +218,28 @@ class SummaryTestsNotDemux(PluginTestCase):
         copyfile('support_files/kd_test_1_R1.fastq.gz', fp1_1)
         copyfile('support_files/kd_test_1_R2.fastq.gz', fp1_2)
 
+        # inserting new prep template
+        prep_info_dict = {
+            'SKB8.640193': {
+                'run_prefix': 's1'}
+        }
+
+        data = {'prep_info': dumps(prep_info_dict),
+                # magic #1 = testing study
+                'study': 1,
+                'data_type': 'Metagenomic'}
+
         jid = self.qclient.post('/apitest/processing_job/', data=data)['job']
 
         out_dir = mkdtemp()
         self._clean_up_files.append(out_dir)
 
-        success, fps, msg = fastqc(self.qclient, jid,
-                                     fp, out_dir)
+        success, obs_fps, msg = fastqc(self.qclient, jid, fp, out_dir)
 
         # Check all output from fastqc
         self.assertEqual("", msg)
         self.assertTrue(success)
-        self.assertEqual(2, len(fps))
+        self.assertEqual(2, len(obs_fps))
 
         # Verify files exist and have correct names
         exp_fps = [[(join(out_dir, 'multiqc.tar.gz'),
@@ -135,4 +261,3 @@ MAPPING_FILE = (
     "SKB8.640193\tILLUMINA\tA\tA\tA\tANL\tA\ts1\tIllumina MiSeq\tdesc2\n"
     "SKD8.640184\tILLUMINA\tA\tA\tA\tANL\tA\ts2\tIllumina MiSeq\tdesc3\n"
 )
-

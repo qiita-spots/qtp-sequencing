@@ -15,7 +15,6 @@ from StringIO import StringIO
 
 
 from qiita_ware.demux import stats as demux_stats
-from qtp_target_gene.fastqc import fastqc
 
 import matplotlib.pyplot as plt
 
@@ -193,4 +192,3 @@ def _summary_demultiplexed(artifact_type, filepaths):
     artifact_information.append('<img src = "%s"/>' % uri)
 
     return artifact_information
-

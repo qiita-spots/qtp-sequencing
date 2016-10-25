@@ -13,6 +13,7 @@ from shutil import copy
 from h5py import File
 from skbio.parse.sequences import load
 from qiita_client import ArtifactInfo
+from qtp_target_gene.fastqc import fastqc
 
 # This is temporary. We should move the demux file format somewhere else
 # (Jose) I'm planning to do this soon
