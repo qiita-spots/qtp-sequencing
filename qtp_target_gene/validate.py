@@ -145,21 +145,35 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
 
     # Check if there is any filepath type that is not supported
     unsupported_fp_types = set(files) - {'raw_forward_seqs',
-                                         'raw_reverse_seqs'}
+                                         'raw_reverse_seqs',
+                                         'preprocessed_fastq'}
     if unsupported_fp_types:
         error_msg = ("Filepath type(s) %s not supported by artifact "
                      "type per_sample_FASTQ. Supported filepath types: "
-                     "raw_forward_seqs, raw_reverse_seqs"
+                     "raw_forward_seqs, raw_reverse_seqs, preprocessed_fastq"
                      % ', '.join(unsupported_fp_types))
         return False, None, error_msg
 
-    if 'raw_forward_seqs' not in files:
-        error_msg = "Missing required filepath type: raw_forward_seqs"
+    if 'raw_forward_seqs' in files:
+        if 'preprocessed_fastq' in files:
+            error_msg = ("If raw_forward_seqs is provided, preprocessed_fastq "
+                         "should not be provided")
+            return False, None, error_msg
+        read_files = files['raw_forward_seqs']
+    elif 'preprocessed_fastq' in files:
+        if 'raw_reverse_seqs' in files:
+            error_msg = ("If preprocessed_fastq is provided, raw_reverse_seqs "
+                         "should not be provided")
+            return False, None, error_msg
+        read_files = files['preprocessed_fastq']
+    else:
+        error_msg = ("Missing required filepath type: raw_forward_seqs or "
+                     "preprocessed_fastq")
         return False, None, error_msg
 
     # Make sure that we hve the same number of files than samples
-    fwd_count = len(files['raw_forward_seqs'])
-    counts_match = fwd_count == samples_count
+    read_files_count = len(read_files)
+    counts_match = read_files_count == samples_count
     if 'raw_reverse_seqs' in files:
         rev_count = len(files['raw_reverse_seqs'])
         counts_match = counts_match and (rev_count == samples_count)
@@ -170,7 +184,7 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
         error_msg = ("The number of provided files doesn't match the "
                      "number of samples (%d): %d raw_forward_seqs, "
                      "%d raw_reverse_seqs (optional, 0 is ok)"
-                     % (samples_count, fwd_count, rev_count))
+                     % (samples_count, read_files_count, rev_count))
         return False, None, error_msg
 
     if 'run_prefix' in prep_info[samples[0]]:
@@ -201,7 +215,7 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
                      "raw_reverse_seqs: %s")
 
     # Check that the provided files match the run prefixes
-    fwd_fail = [basename(fp) for fp in files['raw_forward_seqs']
+    fwd_fail = [basename(fp) for fp in read_files
                 if not basename(fp).startswith(tuple(run_prefixes))]
     if rev_count > 0:
         rev_fail = [basename(fp) for fp in files['raw_reverse_seqs']
