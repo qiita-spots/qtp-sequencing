@@ -244,6 +244,51 @@ class ValidateTests(PluginTestCase):
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
 
+        prep_info = {"1.SKB2.640194": {"not_a_run_prefix": "prefix1"},
+                     "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
+                     "1.SKB3.640195": {"not_a_run_prefix": "prefix2"}}
+        files = {'preprocessed_fastq': [
+            '/path/to/SKB2.640194_file_R1.fastq',
+            '/path/to/SKB2.640194_file_R2.fastq',
+            '/path/to/SKB2.640194_file_unmatched_R1.fastq',
+            '/path/to/SKB2.640194_file_unmatched_R2.fastq',
+            '/path/to/SKM4.640180_file_R1.fastq',
+            '/path/to/SKM4.640180_file_R2.fastq',
+            '/path/to/SKM4.640180_file_unmatched_R1.fastq',
+            '/path/to/SKM4.640180_file_unmatched_R2.fastq',
+            '/path/to/SKB3.640195_file_R1.fastq',
+            '/path/to/SKB3.640195_file_R2.fastq',
+            '/path/to/SKB3.640195_file_unmatched_R1.fastq',
+            '/path/to/SKB3.640195_file_unmatched_R2.fastq']}
+        job_id = self._create_template_and_job(
+            prep_info, files, "per_sample_FASTQ")
+        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
+            self.qclient, job_id, prep_info, files)
+        self.assertTrue(obs_success)
+        filepaths = [
+            ('/path/to/SKB2.640194_file_R1.fastq', 'preprocessed_fastq'),
+            ('/path/to/SKB2.640194_file_R2.fastq', 'preprocessed_fastq'),
+            ('/path/to/SKB2.640194_file_unmatched_R1.fastq',
+             'preprocessed_fastq'),
+            ('/path/to/SKB2.640194_file_unmatched_R2.fastq',
+             'preprocessed_fastq'),
+            ('/path/to/SKM4.640180_file_R1.fastq', 'preprocessed_fastq'),
+            ('/path/to/SKM4.640180_file_R2.fastq', 'preprocessed_fastq'),
+            ('/path/to/SKM4.640180_file_unmatched_R1.fastq',
+             'preprocessed_fastq'),
+            ('/path/to/SKM4.640180_file_unmatched_R2.fastq',
+             'preprocessed_fastq'),
+            ('/path/to/SKB3.640195_file_R1.fastq', 'preprocessed_fastq'),
+            ('/path/to/SKB3.640195_file_R2.fastq', 'preprocessed_fastq'),
+            ('/path/to/SKB3.640195_file_unmatched_R1.fastq',
+             'preprocessed_fastq'),
+            ('/path/to/SKB3.640195_file_unmatched_R2.fastq',
+             'preprocessed_fastq')
+        ]
+        exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
+        self.assertEqual(obs_ainfo, exp)
+        self.assertEqual(obs_error, "")
+
     def test_validate_per_sample_FASTQ_error(self):
         # Filepath type not supported
         prep_info = {"1.SKB2.640194": {"run_prefix": "prefix1"},
@@ -314,6 +359,20 @@ class ValidateTests(PluginTestCase):
                          "The number of provided files doesn't match the "
                          "number of samples (3): 1 raw_forward_seqs, "
                          "2 raw_reverse_seqs (optional, 0 is ok)")
+
+        # preprocessed_fastq count mismatch
+        files = {'preprocessed_fastq': ['/path/to/file1_R1.fastq',
+                                        '/path/to/file1_R2.fastq']}
+        job_id = self._create_template_and_job(
+            prep_info, files, "per_sample_FASTQ")
+        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
+            self.qclient, job_id, prep_info, files)
+        self.assertFalse(obs_success)
+        self.assertIsNone(obs_ainfo)
+        self.assertEqual(obs_error,
+                         "The number of provided files doesn't match the "
+                         "number of samples (3): 2 raw_forward_seqs, "
+                         "0 raw_reverse_seqs (optional, 0 is ok)")
 
         # Run prefix mismatch
         files = {'raw_forward_seqs': ['/path/to/prefix1_fwd.fastq',
