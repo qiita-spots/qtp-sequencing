@@ -225,6 +225,25 @@ class ValidateTests(PluginTestCase):
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
 
+    def test_validate_per_sample_FASTQ_preprocessed_fastq(self):
+        prep_info = {"1.SKB2.640194": {"not_a_run_prefix": "prefix1"},
+                     "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
+                     "1.SKB3.640195": {"not_a_run_prefix": "prefix2"}}
+        files = {'preprocessed_fastq': ['/path/to/SKB2.640194_file.fastq',
+                                        '/path/to/SKM4.640180_file.fastq',
+                                        '/path/to/SKB3.640195_file.fastq']}
+        job_id = self._create_template_and_job(
+            prep_info, files, "per_sample_FASTQ")
+        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
+            self.qclient, job_id, prep_info, files)
+        self.assertTrue(obs_success)
+        filepaths = [('/path/to/SKB2.640194_file.fastq', 'preprocessed_fastq'),
+                     ('/path/to/SKM4.640180_file.fastq', 'preprocessed_fastq'),
+                     ('/path/to/SKB3.640195_file.fastq', 'preprocessed_fastq')]
+        exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
+        self.assertEqual(obs_ainfo, exp)
+        self.assertEqual(obs_error, "")
+
     def test_validate_per_sample_FASTQ_error(self):
         # Filepath type not supported
         prep_info = {"1.SKB2.640194": {"run_prefix": "prefix1"},
@@ -240,9 +259,10 @@ class ValidateTests(PluginTestCase):
         self.assertEqual(obs_error,
                          "Filepath type(s) Unknown not supported by artifact "
                          "type per_sample_FASTQ. Supported filepath types: "
-                         "raw_forward_seqs, raw_reverse_seqs")
+                         "raw_forward_seqs, raw_reverse_seqs, "
+                         "preprocessed_fastq")
 
-        # Missing raw_forward_seqs
+        # Missing raw_forward_seqs and preprocessed_fastq
         files = {'raw_reverse_seqs': ['/path/to/file1.fastq']}
         job_id = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
@@ -251,7 +271,34 @@ class ValidateTests(PluginTestCase):
         self.assertFalse(obs_success)
         self.assertIsNone(obs_ainfo)
         self.assertEqual(obs_error,
-                         "Missing required filepath type: raw_forward_seqs")
+                         "Missing required filepath type: raw_forward_seqs "
+                         "or preprocessed_fastq")
+
+        # Raw forward seqs and preprocessed_fastq
+        files = {'raw_forward_seqs': ['/path/to/file1.fastq'],
+                 'preprocessed_fastq': ['/path/to/file1.fastq']}
+        job_id = self._create_template_and_job(
+            prep_info, files, "per_sample_FASTQ")
+        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
+            self.qclient, job_id, prep_info, files)
+        self.assertFalse(obs_success)
+        self.assertIsNone(obs_ainfo)
+        self.assertEqual(obs_error,
+                         "If raw_forward_seqs is provided, preprocessed_fastq "
+                         "should not be provided")
+
+        # Preprocessed fastq and raw_reverse_seqs
+        files = {'raw_reverse_seqs': ['/path/to/file1.fastq'],
+                 'preprocessed_fastq': ['/path/to/file1.fastq']}
+        job_id = self._create_template_and_job(
+            prep_info, files, "per_sample_FASTQ")
+        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
+            self.qclient, job_id, prep_info, files)
+        self.assertFalse(obs_success)
+        self.assertIsNone(obs_ainfo)
+        self.assertEqual(obs_error,
+                         "If preprocessed_fastq is provided, raw_reverse_seqs "
+                         "should not be provided")
 
         # Count mismatch
         files = {'raw_forward_seqs': ['/path/to/file1.fastq'],
