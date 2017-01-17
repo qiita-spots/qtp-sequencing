@@ -13,6 +13,7 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from json import dumps
 from gzip import GzipFile
+from time import sleep
 
 from qiita_client.testing import PluginTestCase
 
@@ -31,6 +32,14 @@ class PluginTests(PluginTestCase):
                     rmtree(fp)
                 else:
                     remove(fp)
+
+    def _wait_job(self, job_id):
+        for i in range(10):
+            status = self.qclient.get_job_info(job_id)['status']
+            if status != 'running':
+                break
+            sleep(0.5)
+        return status
 
     def test_plugin_summary(self):
         artifact_id = 1
@@ -55,6 +64,7 @@ class PluginTests(PluginTestCase):
             fh.write(READS)
 
         plugin("https://localhost:21174", job_id, self.out_dir)
+        self._wait_job(job_id)
         obs = self.qclient.get_job_info(job_id)
         self.assertEqual(obs['status'], 'success')
 
@@ -86,6 +96,7 @@ class PluginTests(PluginTestCase):
             '/apitest/processing_job/', data=data)['job']
 
         plugin("https://localhost:21174", job_id, self.out_dir)
+        self._wait_job(job_id)
         obs = self.qclient.get_job_info(job_id)
         self.assertEqual(obs['status'], 'success')
 
@@ -99,6 +110,7 @@ class PluginTests(PluginTestCase):
         job_id = self.qclient.post(
             '/apitest/processing_job/', data=data)['job']
         plugin("https://localhost:21174", job_id, self.out_dir)
+        self._wait_job(job_id)
         obs = self.qclient.get_job_info(job_id)
         self.assertEqual(obs['status'], 'error')
 
