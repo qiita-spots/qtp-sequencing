@@ -160,20 +160,25 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
                          "should not be provided")
             return False, None, error_msg
         read_files = files['raw_forward_seqs']
+        read_files_count = len(read_files)
+        counts_match = read_files_count == samples_count
     elif 'preprocessed_fastq' in files:
         if 'raw_reverse_seqs' in files:
             error_msg = ("If preprocessed_fastq is provided, raw_reverse_seqs "
                          "should not be provided")
             return False, None, error_msg
         read_files = files['preprocessed_fastq']
+        read_files_count = len(read_files)
+        # In the preprocessed_fastq case, we either have 1 file per sample
+        # or 4 files per sample
+        counts_match = ((read_files_count == samples_count) or
+                        (read_files_count == 4 * samples_count))
     else:
         error_msg = ("Missing required filepath type: raw_forward_seqs or "
                      "preprocessed_fastq")
         return False, None, error_msg
 
     # Make sure that we hve the same number of files than samples
-    read_files_count = len(read_files)
-    counts_match = read_files_count == samples_count
     if 'raw_reverse_seqs' in files:
         rev_count = len(files['raw_reverse_seqs'])
         counts_match = counts_match and (rev_count == samples_count)
