@@ -233,6 +233,21 @@ class SummaryTestsNotDemux(PluginTestCase):
             'CGAAGGCAACCCCCTGGGATAATATTTACGCTCAT\n</p><hr/>']
         self.assertItemsEqual(obs, exp)
 
+    def test_summary_not_demultiplexed_empty(self):
+        test_dir = mkdtemp()
+        self._clean_up_files.append(test_dir)
+
+        fwd_fp = join(test_dir, 'reads.fastq')
+        open(fwd_fp, 'w', 0).close()
+
+        artifact_type = 'per_sample_FASTQ'
+        filepaths = {'preprocessed_fastq': [fwd_fp]}
+        obs = _summary_not_demultiplexed(artifact_type, filepaths)
+        exp = [
+            '<h3>reads.fastq (preprocessed_fastq)</h3>',
+            '<b>MD5:</b>: d41d8cd98f00b204e9800998ecf8427e</br>']
+        self.assertItemsEqual(obs, exp)
+
     def test_summary_demultiplexed(self):
         artifact_type = 'Demultiplexed'
         filepaths = {
