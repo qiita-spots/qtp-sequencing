@@ -398,7 +398,8 @@ def _validate_demultiplexed(qclient, job_id, prep_info, files, out_dir):
         # Generate the demux file from the fastq
         demux = join(out_dir, "%s.demux" % splitext(basename(fastq))[0])
         with open_file(demux, "w") as f:
-            to_hdf5(fastq, f)
+            # to_hdf5 expects a list
+            to_hdf5([fastq], f)
         # Validate the demux, providing the original fastq
         success, a_info, error_msg = _validate_demux_file(
             qclient, job_id, prep_info, out_dir, demux, fastq_fp=fastq,
@@ -407,7 +408,8 @@ def _validate_demultiplexed(qclient, job_id, prep_info, files, out_dir):
         # Generate the demux file from the fasta
         demux = join(out_dir, "%s.demux" % splitext(basename(fasta))[0])
         with open_file(demux, "w") as f:
-            to_hdf5(fasta, f)
+            # to_hdf5 expects a list
+            to_hdf5([fasta], f)
         # Validate the demux, providing the original fasta
         success, a_info, error_msg = _validate_demux_file(
             qclient, job_id, prep_info, out_dir, demux, fasta_fp=fasta,
