@@ -13,7 +13,7 @@ before_install:
   - conda update --yes conda
 install:
   # At this moment, this plugin depends on qiita, so install everything in the same environment
-  - travis_retry conda create --yes -n qiita_env python=2.7 pip nose flake8
+  - travis_retry conda create --yes -n qiita python=2.7 pip nose flake8
     pyzmq networkx pyparsing natsort mock future libgfortran
     'pandas>=0.18' 'scipy>0.13.0' 'numpy>=1.7' 'h5py>=2.3.1'
   - source activate qiita
@@ -30,7 +30,7 @@ before_script:
   - qiita pet webserver start &
 script:
   - sleep 10 # give enough time to the webserver to start
-  - configure_target_gene_types --env-script "source activate qiita_env" --server-cert $QIITA_SERVER_CERT
+  - configure_target_gene_types --env-script "source activate qiita" --server-cert $QIITA_SERVER_CERT
   - nosetests --with-doctest --with-coverage
   - flake8 qtp_target_gene setup.py scripts
 addons:
