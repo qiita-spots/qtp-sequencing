@@ -598,6 +598,7 @@ class ValidateTests(PluginTestCase):
                          "'SFF', 'FASTQ', 'FASTA', 'FASTA_Sanger', "
                          "'per_sample_FASTQ', 'Demultiplexed'")
 
+
 FASTQ_SEQS = """@{s1}_1 orig_bc=abc new_bc=abc bc_diffs=0
 xyz
 +
