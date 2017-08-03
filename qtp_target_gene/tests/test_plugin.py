@@ -38,7 +38,7 @@ class PluginTests(PluginTestCase):
             status = self.qclient.get_job_info(job_id)['status']
             if status != 'running':
                 break
-            sleep(0.5)
+            sleep(1)
         return status
 
     def test_plugin_summary(self):
