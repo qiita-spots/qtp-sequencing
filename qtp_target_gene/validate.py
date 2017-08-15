@@ -9,6 +9,7 @@
 from os.path import basename, join, splitext
 from json import loads
 from shutil import copy
+from h5py import File
 
 from qiita_client import ArtifactInfo
 from qiita_files.util import open_file
@@ -307,17 +308,20 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
         # Fix the sample ids
         # Do not modify the original demux file, copy it to a new location
         new_demux_fp = join(out_dir, basename(demux_fp))
-        copy(demux_fp, new_demux_fp)
-        # Need to catch an error
-        with open_file(new_demux_fp, 'r+') as f:
-            for old in f:
-                f.move(old, id_map[old])
+        # this if is important so we don't regenerate the demux file if the
+        # user uploads fastq or fna
+        if demux_fp != new_demux_fp:
+            copy(demux_fp, new_demux_fp)
+            demux_fp = new_demux_fp
 
-        # When we fix, we always generate the FASTQ and FASTA file
-        # By setting them to None, below will be generated
-        demux_fp = new_demux_fp
-        fastq_fp = None
-        fasta_fp = None
+        if bool(id_map):
+            with open_file(demux_fp, 'r+') as f:
+                for old in f:
+                    f.move(old, id_map[old])
+            # When we fix, we always generate the FASTQ and FASTA file
+            # By setting them to None, below will be generated
+            fastq_fp = None
+            fasta_fp = None
 
     # If we didn't fix anything, we only generate the files if they don't
     # already exists
@@ -397,7 +401,7 @@ def _validate_demultiplexed(qclient, job_id, prep_info, files, out_dir):
     elif fastq:
         # Generate the demux file from the fastq
         demux = join(out_dir, "%s.demux" % splitext(basename(fastq))[0])
-        with open_file(demux, "w") as f:
+        with File(demux, 'w') as f:
             # to_hdf5 expects a list
             to_hdf5([fastq], f)
         # Validate the demux, providing the original fastq
@@ -407,7 +411,7 @@ def _validate_demultiplexed(qclient, job_id, prep_info, files, out_dir):
     elif fasta:
         # Generate the demux file from the fasta
         demux = join(out_dir, "%s.demux" % splitext(basename(fasta))[0])
-        with open_file(demux, "w") as f:
+        with File(demux, 'w') as f:
             # to_hdf5 expects a list
             to_hdf5([fasta], f)
         # Validate the demux, providing the original fasta
