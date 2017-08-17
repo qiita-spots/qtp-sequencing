@@ -314,14 +314,13 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
             copy(demux_fp, new_demux_fp)
             demux_fp = new_demux_fp
 
-        if bool(id_map):
-            with open_file(demux_fp, 'r+') as f:
-                for old in f:
-                    f.move(old, id_map[old])
-            # When we fix, we always generate the FASTQ and FASTA file
-            # By setting them to None, below will be generated
-            fastq_fp = None
-            fasta_fp = None
+        with open_file(demux_fp, 'r+') as f:
+            for old in f:
+                f.move(old, id_map[old])
+        # When we fix, we always generate the FASTQ and FASTA file
+        # By setting them to None, below will be generated
+        fastq_fp = None
+        fasta_fp = None
 
     # If we didn't fix anything, we only generate the files if they don't
     # already exists
