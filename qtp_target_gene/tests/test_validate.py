@@ -512,6 +512,29 @@ class ValidateTests(PluginTestCase):
         with File(exp_demux_fp) as f:
             self.assertItemsEqual(f.keys(), ["1.SKB2.640194", "1.SKM4.640180"])
 
+    def test_validate_demux_file_without_demux(self):
+        demux_fp, fastq_fp, out_dir = self._generate_files(
+            {'s1': 's1', 's2': 's2'})
+        remove(demux_fp)
+        prep_info = {"1.SKB2.640194": {"run_prefix": "s1"},
+                     "1.SKM4.640180": {"run_prefix": "s2"},
+                     "1.SKB3.640195": {"run_prefix": "s3"},
+                     "1.SKB6.640176": {"run_prefix": "s4"}}
+        files = {'preprocessed_fastq': [fastq_fp]}
+        job_id = self._create_template_and_job(
+            prep_info, files, "Demultiplexed")
+        obs_success, obs_ainfo, obs_error = _validate_demultiplexed(
+            self.qclient, job_id, prep_info, files, out_dir)
+        self.assertEqual(obs_error, "")
+        self.assertTrue(obs_success)
+
+        # we are gonna just check that the demux file looks good and [0] is
+        # because this only returns one element in the object list
+        demux = [f[0] for f in obs_ainfo[0].files
+                 if f[1] == 'preprocessed_demux'][0]
+        with File(demux) as f:
+            self.assertItemsEqual(f.keys(), ["1.SKB2.640194", "1.SKM4.640180"])
+
     def test_validate_demux_file_infer(self):
         demux_fp, _, out_dir = self._generate_files({'s1': 'SKB2.640194',
                                                      's2': 'SKM4.640180'})
