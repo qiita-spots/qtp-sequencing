@@ -529,7 +529,7 @@ class ValidateTests(PluginTestCase):
         self.assertTrue(obs_success)
 
         # we are gonna just check that the demux file looks good and [0] is
-        # because this only return one element in the object list
+        # because this only returns one element in the object list
         demux = [f[0] for f in obs_ainfo[0].files
                  if f[1] == 'preprocessed_demux'][0]
         with File(demux) as f:
