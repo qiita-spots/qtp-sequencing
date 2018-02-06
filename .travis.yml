@@ -4,6 +4,10 @@ group: deprecated-2017Q4
 env:
   - PYTHON_VERSION=2.7
 before_install:
+  # lines to avoid matplotlib DISPLAY error
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  # regular install
   - wget http://repo.continuum.io/miniconda/Miniconda3-3.7.3-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
