@@ -27,6 +27,8 @@ install:
   - wget https://data.qiime2.org/distro/core/qiime2-2017.12-py35-linux-conda.yml
   - travis_retry conda create -q --yes -n qtp-target-gene python=2.7 pip nose flake8
   - source activate qtp-target-gene
+  - pip install -U pip
+  - python --version
   - pip install https://github.com/qiita-spots/qiita_client/archive/master.zip
   - pip install coveralls flake8
   - travis_retry pip install . --process-dependency-links
