@@ -37,7 +37,7 @@ before_script:
   - qiita plugins update
   - qiita pet webserver --no-build-docs start &
 script:
-  - source activate qtp-visualization
+  - source activate qtp-target-gene
   - sleep 5 # give enough time to the webserver to start
   - start_target_gene_types "https://localhost:21174" register ignored
   - nosetests --with-doctest --with-coverage -v --cover-package=qtp_target_gene
