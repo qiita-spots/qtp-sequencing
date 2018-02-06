@@ -13,25 +13,25 @@ from .summary import generate_html_summary
 
 # DEfine the supported artifact types
 artifact_types = [
-    QiitaArtifactType('SFF', 'Raw SFF files', False, False,
+    QiitaArtifactType('SFF', 'Raw SFF files', False, False, True,
                       [('raw_sff', True)]),
     QiitaArtifactType('FASTA_Sanger', 'Raw fasta files from Sanger sequencing',
-                      False, False, [('raw_fasta', True)]),
+                      False, False, False, [('raw_fasta', True)]),
     QiitaArtifactType('FASTQ', 'Raw fastq files, with or without paired ends',
-                      False, False, [('raw_forward_seqs', True),
-                                     ('raw_reverse_seqs', False),
-                                     ('raw_barcodes', True)]),
-    QiitaArtifactType('FASTA', 'Raw fasta files', False, False,
+                      False, False, True, [('raw_forward_seqs', True),
+                                           ('raw_reverse_seqs', False),
+                                           ('raw_barcodes', True)]),
+    QiitaArtifactType('FASTA', 'Raw fasta files', False, False, False,
                       [('raw_fasta', True), ('raw_qual', False)]),
     QiitaArtifactType('per_sample_FASTQ', 'Raw per sample FASTQ files', False,
-                      False, [('raw_forward_seqs', True),
-                              ('raw_reverse_seqs', False)]),
+                      False, True, [('raw_forward_seqs', True),
+                                    ('raw_reverse_seqs', False)]),
     QiitaArtifactType('Demultiplexed',
                       'Demultiplexed and QC sequeunces with QIIME labels',
-                      True, True, [('preprocessed_fasta', True),
-                                   ('preprocessed_fastq', True),
-                                   ('preprocessed_demux', False),
-                                   ('log', False)]),
+                      True, True, False, [('preprocessed_fasta', True),
+                                          ('preprocessed_fastq', True),
+                                          ('preprocessed_demux', False),
+                                          ('log', False)]),
 ]
 
 # Initialize the plugin
