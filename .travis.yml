@@ -24,19 +24,18 @@ install:
   - qiita-env make --no-load-ontologies
   - source deactivate
   # installing this plugin
-  - travis_retry conda create -q --yes -n qtp-target-gene python=2.7 pip nose flake8
-  - source activate qtp-target-gene
+  - source activate qiita
   - pip install -U pip
   - pip install https://github.com/qiita-spots/qiita_client/archive/master.zip
   - pip install coveralls flake8
   - travis_retry pip install . --process-dependency-links
-  - configure_target_gene_types --env-script "source activate qtp-target-gene" --server-cert $QIITA_SERVER_CERT
+  - configure_target_gene_types --env-script "source activate qiita" --server-cert $QIITA_SERVER_CERT
 before_script:
   - source activate qiita
   - qiita plugins update
   - qiita pet webserver --no-build-docs start &
 script:
-  - source activate qtp-target-gene
+  - source activate qiita
   - sleep 5 # give enough time to the webserver to start
   - start_target_gene_types "https://localhost:21174" register ignored
   - nosetests --with-doctest --with-coverage -v --cover-package=qtp_target_gene
