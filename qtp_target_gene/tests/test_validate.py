@@ -385,10 +385,11 @@ class ValidateTests(PluginTestCase):
         self.assertFalse(obs_success)
         self.assertIsNone(obs_ainfo)
         self.assertEqual(obs_error,
-                         "The provided files do not match the run prefix "
-                         "values in the prep information. Offending files: "
-                         "raw_forward_seqs: Aprefix3_fwd.fastq, "
-                         "raw_reverse_seqs: ")
+                         'The provided files are not prefixed by sample id or '
+                         'do not match the run prefix values in the prep '
+                         'information. Offending files:\n raw_forward_seqs: '
+                         'prefix1_fwd.fastq, prefix2_fwd.fastq, '
+                         'Aprefix3_fwd.fastq\nraw_reverse_seqs: ')
 
         # Non-unique run-prefix values
         prep_info = {"1.SKB2.640194": {"run_prefix": "prefix1"},
@@ -416,11 +417,10 @@ class ValidateTests(PluginTestCase):
         self.assertFalse(obs_success)
         self.assertIsNone(obs_ainfo)
         self.assertEqual(obs_error,
-                         "The provided files are not prefixed by sample id. "
-                         "Please provide the 'run_prefix' column in your prep "
-                         "information. Offending files: raw_forward_seqs: "
-                         "prefix1_fwd.fastq, prefix2_fwd.fastq, "
-                         "Aprefix3_fwd.fastq, raw_reverse_seqs: ")
+                         'The provided files are not prefixed by sample id. '
+                         'Offending files:\n raw_forward_seqs: '
+                         'prefix1_fwd.fastq, prefix2_fwd.fastq, '
+                         'Aprefix3_fwd.fastq\nraw_reverse_seqs: ')
 
     def test_create_artifact_demultipelexed_error(self):
         out_dir = mkdtemp()
