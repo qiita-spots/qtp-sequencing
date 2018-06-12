@@ -204,35 +204,29 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
             rev_fail = []
         return fwd_fail, rev_fail
 
-    run_prefix_present = 'run_prefix' in prep_info[samples[0]]
-    if run_prefix_present:
-        # The column 'run_prefix' is present in the prep information.
-        # Make sure that twe have the same number of run_prefix values
-        # than the number of samples
-        run_prefixes = [v['run_prefix'] for k, v in prep_info.items()]
-        if samples_count != len(set(run_prefixes)):
-            repeated = ["%s (%d)" % (p, run_prefixes.count(p))
-                        for p in set(run_prefixes)
-                        if run_prefixes.count(p) > 1]
-            error_msg = ("The values for the column 'run_prefix' are not "
-                         "unique for each sample. Repeated values: %s"
-                         % ', '.join(repeated))
-            return False, None, error_msg
+    # first let's check via sample sample_names
+    run_prefixes = [sid.split('.', 1)[1] for sid in samples]
+    fwd_fail, rev_fail = _check_files(run_prefixes, read_files,
+                                      rev_count, files)
 
-        fwd_fail, rev_fail = _check_files(run_prefixes, read_files,
-                                          rev_count, files)
-        # Let's check if the samples have been prefixed by sample name
-        if fwd_fail or rev_fail:
-            run_prefixes = [sid.split('.', 1)[1] for sid in samples]
+    # if that doesn't work, let's test via run_prefix
+    run_prefix_present = 'run_prefix' in prep_info[samples[0]]
+    if (fwd_fail or rev_fail) and run_prefix_present:
+            # The column 'run_prefix' is present in the prep information.
+            # Make sure that twe have the same number of run_prefix values
+            # than the number of samples
+            run_prefixes = [v['run_prefix'] for k, v in prep_info.items()]
+            if samples_count != len(set(run_prefixes)):
+                repeated = ["%s (%d)" % (p, run_prefixes.count(p))
+                            for p in set(run_prefixes)
+                            if run_prefixes.count(p) > 1]
+                error_msg = ("The values for the column 'run_prefix' are not "
+                             "unique for each sample. Repeated values: %s"
+                             % ', '.join(repeated))
+                return False, None, error_msg
+
             fwd_fail, rev_fail = _check_files(run_prefixes, read_files,
                                               rev_count, files)
-    else:
-        # The column 'run_prefix' is not in the prep template. In this case,
-        # check that the files are prefixed by the sample ids without the
-        # study id
-        run_prefixes = [sid.split('.', 1)[1] for sid in samples]
-        fwd_fail, rev_fail = _check_files(run_prefixes, read_files,
-                                          rev_count, files)
 
     if fwd_fail or rev_fail:
         error_msg = "The provided files are not prefixed by sample id"

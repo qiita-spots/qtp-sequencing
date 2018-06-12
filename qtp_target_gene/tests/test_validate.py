@@ -388,7 +388,6 @@ class ValidateTests(PluginTestCase):
                          'The provided files are not prefixed by sample id or '
                          'do not match the run prefix values in the prep '
                          'information. Offending files:\n raw_forward_seqs: '
-                         'prefix1_fwd.fastq, prefix2_fwd.fastq, '
                          'Aprefix3_fwd.fastq\nraw_reverse_seqs: ')
 
         # Non-unique run-prefix values
