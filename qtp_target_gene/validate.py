@@ -212,9 +212,6 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
     # if that doesn't work, let's test via run_prefix
     run_prefix_present = 'run_prefix' in prep_info[samples[0]]
     if (fwd_fail or rev_fail) and run_prefix_present:
-            # The column 'run_prefix' is present in the prep information.
-            # Make sure that twe have the same number of run_prefix values
-            # than the number of samples
             run_prefixes = [v['run_prefix'] for k, v in prep_info.items()]
             if samples_count != len(set(run_prefixes)):
                 repeated = ["%s (%d)" % (p, run_prefixes.count(p))
