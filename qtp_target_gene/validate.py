@@ -193,10 +193,25 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
                      % (samples_count, read_files_count, rev_count))
         return False, None, error_msg
 
-    if 'run_prefix' in prep_info[samples[0]]:
-        # The column 'run_prefix' is present in the prep information.
-        # Make sure that twe have the same number of run_prefix values
-        # than the number of samples
+    def _check_files(run_prefixes, read_files, rev_count, files):
+        # Check that the provided files match the run prefixes
+        fwd_fail = [basename(fp) for fp in read_files
+                    if not basename(fp).startswith(tuple(run_prefixes))]
+        if rev_count > 0:
+            rev_fail = [basename(fp) for fp in files['raw_reverse_seqs']
+                        if not basename(fp).startswith(tuple(run_prefixes))]
+        else:
+            rev_fail = []
+        return fwd_fail, rev_fail
+
+    # first let's check via sample sample_names
+    run_prefixes = [sid.split('.', 1)[1] for sid in samples]
+    fwd_fail, rev_fail = _check_files(run_prefixes, read_files,
+                                      rev_count, files)
+
+    # if that doesn't work, let's test via run_prefix
+    run_prefix_present = 'run_prefix' in prep_info[samples[0]]
+    if (fwd_fail or rev_fail) and run_prefix_present:
         run_prefixes = [v['run_prefix'] for k, v in prep_info.items()]
         if samples_count != len(set(run_prefixes)):
             repeated = ["%s (%d)" % (p, run_prefixes.count(p))
@@ -207,30 +222,19 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
                          % ', '.join(repeated))
             return False, None, error_msg
 
-        error_msg = ("The provided files do not match the run prefix values "
-                     "in the prep information. Offending files: "
-                     "raw_forward_seqs: %s, raw_reverse_seqs: %s")
-    else:
-        # The column 'run_prefix' is not in the prep template. In this case,
-        # check that the files are prefixed by the sample ids without the
-        # study id
-        run_prefixes = [sid.split('.', 1)[1] for sid in samples]
-        error_msg = ("The provided files are not prefixed by sample id. "
-                     "Please provide the 'run_prefix' column in your prep "
-                     "information. Offending files: raw_forward_seqs: %s, "
-                     "raw_reverse_seqs: %s")
-
-    # Check that the provided files match the run prefixes
-    fwd_fail = [basename(fp) for fp in read_files
-                if not basename(fp).startswith(tuple(run_prefixes))]
-    if rev_count > 0:
-        rev_fail = [basename(fp) for fp in files['raw_reverse_seqs']
-                    if not basename(fp).startswith(tuple(run_prefixes))]
-    else:
-        rev_fail = []
+        fwd_fail, rev_fail = _check_files(run_prefixes, read_files,
+                                          rev_count, files)
 
     if fwd_fail or rev_fail:
-        error_msg = error_msg % (', '.join(fwd_fail), ', '.join(rev_fail))
+        error_msg = "The provided files are not prefixed by sample id"
+        if run_prefix_present:
+            error_msg += (" or do not match the run prefix values in the "
+                          "prep information.")
+        else:
+            error_msg += "."
+        error_msg += (" Offending files:\n raw_forward_seqs: %s\n"
+                      "raw_reverse_seqs: %s" % (', '.join(fwd_fail),
+                                                ', '.join(rev_fail)))
         return False, None, error_msg
 
     filepaths = []
