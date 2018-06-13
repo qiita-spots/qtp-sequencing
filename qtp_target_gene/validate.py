@@ -212,18 +212,18 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
     # if that doesn't work, let's test via run_prefix
     run_prefix_present = 'run_prefix' in prep_info[samples[0]]
     if (fwd_fail or rev_fail) and run_prefix_present:
-            run_prefixes = [v['run_prefix'] for k, v in prep_info.items()]
-            if samples_count != len(set(run_prefixes)):
-                repeated = ["%s (%d)" % (p, run_prefixes.count(p))
-                            for p in set(run_prefixes)
-                            if run_prefixes.count(p) > 1]
-                error_msg = ("The values for the column 'run_prefix' are not "
-                             "unique for each sample. Repeated values: %s"
-                             % ', '.join(repeated))
-                return False, None, error_msg
+        run_prefixes = [v['run_prefix'] for k, v in prep_info.items()]
+        if samples_count != len(set(run_prefixes)):
+            repeated = ["%s (%d)" % (p, run_prefixes.count(p))
+                        for p in set(run_prefixes)
+                        if run_prefixes.count(p) > 1]
+            error_msg = ("The values for the column 'run_prefix' are not "
+                         "unique for each sample. Repeated values: %s"
+                         % ', '.join(repeated))
+            return False, None, error_msg
 
-            fwd_fail, rev_fail = _check_files(run_prefixes, read_files,
-                                              rev_count, files)
+        fwd_fail, rev_fail = _check_files(run_prefixes, read_files,
+                                          rev_count, files)
 
     if fwd_fail or rev_fail:
         error_msg = "The provided files are not prefixed by sample id"
