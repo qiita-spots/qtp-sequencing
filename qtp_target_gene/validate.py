@@ -208,6 +208,7 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
     sample_prefixes = [sid for sid in samples]
     fwd_fail, rev_fail = _check_files(sample_prefixes, read_files,
                                       rev_count, files)
+    # Error message for sample name error
     sample_fail = ''
     if (fwd_fail or rev_fail):
         sample_fail = ("Sample prefixes %s didn't match files %s" %
