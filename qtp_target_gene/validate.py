@@ -193,22 +193,26 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
                      % (samples_count, read_files_count, rev_count))
         return False, None, error_msg
 
-    def _check_files(run_prefixes, read_files, rev_count, files):
-        # Check that the provided files match the run prefixes
+    def _check_files(prefixes, read_files, rev_count, files):
+        # Check that the provided files match the prefixes
         fwd_fail = [basename(fp) for fp in read_files
-                    if not basename(fp).startswith(tuple(run_prefixes))]
+                    if not basename(fp).startswith(tuple(prefixes))]
         if rev_count > 0:
             rev_fail = [basename(fp) for fp in files['raw_reverse_seqs']
-                        if not basename(fp).startswith(tuple(run_prefixes))]
+                        if not basename(fp).startswith(tuple(prefixes))]
         else:
             rev_fail = []
         return fwd_fail, rev_fail
 
     # first let's check via sample sample_names
-    run_prefixes = [sid.split('.', 1)[1] for sid in samples]
-    fwd_fail, rev_fail = _check_files(run_prefixes, read_files,
+    sample_prefixes = [sid for sid in samples]
+    fwd_fail, rev_fail = _check_files(sample_prefixes, read_files,
                                       rev_count, files)
-
+    # Error message for sample name error
+    sample_fail = ''
+    if (fwd_fail or rev_fail):
+        sample_fail = ("Sample prefixes %s didn't match files %s" %
+                       (sample_prefixes, fwd_fail))
     # if that doesn't work, let's test via run_prefix
     run_prefix_present = 'run_prefix' in prep_info[samples[0]]
     if (fwd_fail or rev_fail) and run_prefix_present:
@@ -235,6 +239,9 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
         error_msg += (" Offending files:\n raw_forward_seqs: %s\n"
                       "raw_reverse_seqs: %s" % (', '.join(fwd_fail),
                                                 ', '.join(rev_fail)))
+
+        if sample_fail:
+            error_msg += sample_fail
         return False, None, error_msg
 
     filepaths = []
