@@ -206,6 +206,26 @@ class ValidateTests(PluginTestCase):
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
 
+    def test_validate_per_sample_FASTQ_sample_names_with_study_id(self):
+        prep_info = {"1.SKB2.640194": {"run_prefix": "prefix1"},
+                     "1.SKM4.640180": {"run_prefix": "prefix2"},
+                     "1.SKB3.640195": {"run_prefix": "prefix3"}}
+        files = {'raw_forward_seqs': ['/path/to/1.SKB2.640194.fastq',
+                                      '/path/to/1.SKM4.640180.fastq',
+                                      '/path/to/1.SKB3.640195.fastq']}
+        job_id = self._create_template_and_job(
+            prep_info, files, "per_sample_FASTQ")
+        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
+            self.qclient, job_id, prep_info, files)
+
+        self.assertTrue(obs_success)
+        filepaths = [('/path/to/1.SKB2.640194.fastq', 'raw_forward_seqs'),
+                     ('/path/to/1.SKM4.640180.fastq', 'raw_forward_seqs'),
+                     ('/path/to/1.SKB3.640195.fastq', 'raw_forward_seqs')]
+        exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
+        self.assertEqual(obs_ainfo, exp)
+        self.assertEqual(obs_error, "")
+
     def test_validate_per_sample_FASTQ(self):
         prep_info = {"1.SKB2.640194": {"not_a_run_prefix": "prefix1"},
                      "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},

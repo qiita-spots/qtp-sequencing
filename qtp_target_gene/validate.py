@@ -209,6 +209,11 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
     fwd_fail, rev_fail = _check_files(run_prefixes, read_files,
                                       rev_count, files)
 
+    # if that didn't work let's try with sample names prefixed with study id
+    if (fwd_fail or rev_fail):
+        fwd_fail, rev_fail = _check_files(samples, read_files,
+                                          rev_count, files)
+
     # if that doesn't work, let's test via run_prefix
     run_prefix_present = 'run_prefix' in prep_info[samples[0]]
     if (fwd_fail or rev_fail) and run_prefix_present:
