@@ -69,19 +69,35 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype):
 
         # Check those filepath types that are required
         for ftype, t_files in files.items():
-            if num_prefixes != len(t_files):
+            # SFF is an special case cause we can have multiple files with
+            # the same prefix
+            if num_prefixes != len(t_files) and atype != 'SFF':
                 offending[ftype] = (
                     "The number of provided files (%d) doesn't match the "
                     "number of run prefix values in the prep info (%d): %s"
                     % (len(t_files), num_prefixes,
                        ', '.join(basename(f) for f in t_files)))
             else:
-                fail = [basename(fp) for fp in t_files
-                        if not basename(fp).startswith(tuple(run_prefixes))]
-                if fail:
+                rps = []
+                fps = []
+                for fp in t_files:
+                    bn = basename(fp)
+                    found = [rp for rp in run_prefixes if bn.startswith(rp)]
+                    if found:
+                        rps.extend(found)
+                    else:
+                        fps.append(bn)
+                if fps:
                     offending[ftype] = (
                         "The provided files do not match the run prefix "
-                        "values in the prep information: %s" % ', '.join(fail))
+                        "values in the prep information: %s" % ', '.join(fps))
+                else:
+                    rps = run_prefixes - set(rps)
+                    if rps:
+                        offending[ftype] = (
+                            "The following run prefixes in the prep "
+                            "information file do not match any file: %s"
+                            % ', '.join(rps))
 
             types_seen.add(ftype)
     else:

@@ -186,6 +186,35 @@ class ValidateTests(PluginTestCase):
         self.assertIsNone(obs_ainfo)
         self.assertItemsEqual(obs_error.split('\n'), error.split('\n'))
 
+    def test_validate_SFF(self):
+        prep_info = {"1.SKB2.640194": {"run_prefix": "GAX40"},
+                     "1.SKM4.640180": {"run_prefix": "GAX40"},
+                     "1.SKB3.640195": {"run_prefix": "GAX50"}}
+        files = {'raw_sff': ['/path/to/GAX401.sff', '/path/to/GAX402.sff',
+                             '/path/to/GAX501.sff']}
+        job_id = self._create_template_and_job(prep_info, files, "SFF")
+        obs_success, obs_ainfo, obs_error = _validate_multiple(
+            self.qclient, job_id, prep_info, files, 'SFF')
+        self.assertTrue(obs_success)
+        filepaths = [('/path/to/GAX401.sff', 'raw_sff'),
+                     ('/path/to/GAX402.sff', 'raw_sff'),
+                     ('/path/to/GAX501.sff', 'raw_sff')]
+        exp = [ArtifactInfo(None, "SFF", filepaths)]
+        self.assertEqual(obs_ainfo, exp)
+        self.assertEqual(obs_error, "")
+
+        # let's test a failure
+        files = {'raw_sff': ['/path/to/GAX401.sff', '/path/to/GAX402.sff']}
+        job_id = self._create_template_and_job(prep_info, files, "SFF")
+        obs_success, obs_ainfo, obs_error = _validate_multiple(
+            self.qclient, job_id, prep_info, files, 'SFF')
+        error = ("Error creating artifact. Offending files:\nraw_sff: The "
+                 "following run prefixes in the prep information file do not "
+                 "match any file: GAX50")
+        self.assertFalse(obs_success)
+        self.assertIsNone(obs_ainfo)
+        self.assertItemsEqual(obs_error, error)
+
     def test_validate_per_sample_FASTQ_run_prefix(self):
         prep_info = {"1.SKB2.640194": {"run_prefix": "prefix1"},
                      "1.SKM4.640180": {"run_prefix": "prefix2"},
