@@ -209,7 +209,7 @@ class ValidateTests(PluginTestCase):
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, 'SFF')
         error = ("Error creating artifact. Offending files:\nraw_sff: The "
-                 "provided run prefixes in the prep information file do not "
+                 "following run prefixes in the prep information file do not "
                  "match any file: GAX50")
         self.assertFalse(obs_success)
         self.assertIsNone(obs_ainfo)
