@@ -95,7 +95,7 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype):
                     rps = run_prefixes - set(rps)
                     if rps:
                         offending[ftype] = (
-                            "The provided run prefixes in the prep "
+                            "The following run prefixes in the prep "
                             "information file do not match any file: %s"
                             % ', '.join(rps))
 
