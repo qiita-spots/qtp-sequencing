@@ -12,10 +12,8 @@ from os.path import basename, join
 from urllib import quote
 from base64 import b64encode
 from StringIO import StringIO
-
-
 from qiita_files.demux import stats as demux_stats
-import matplotlib.pyplot as plt
+import matplotlib; matplotlib.use('agg')
 
 
 FILEPATH_TYPE_TO_NOT_SHOW_HEAD = ['SFF']
@@ -180,12 +178,12 @@ def _summary_demultiplexed(artifact_type, filepaths):
     artifact_information.append("<br/>")
 
     # taken from http://stackoverflow.com/a/9141911
-    plt.bar(shist_edge[:-1], shist, width=1)
-    plt.xlim(min(shist_edge), max(shist_edge))
-    plt.xlabel('Sequence Length')
-    plt.ylabel('Number of sequences')
+    matplotlib.pyplot.bar(shist_edge[:-1], shist, width=1)
+    matplotlib.pyplot.xlim(min(shist_edge), max(shist_edge))
+    matplotlib.pyplot.xlabel('Sequence Length')
+    matplotlib.pyplot.ylabel('Number of sequences')
     plot = StringIO()
-    plt.savefig(plot, format='png')
+    matplotlib.pyplot.savefig(plot, format='png')
     plot.seek(0)
     uri = 'data:image/png;base64,' + quote(b64encode(plot.buf))
     artifact_information.append('<img src = "%s"/>' % uri)
