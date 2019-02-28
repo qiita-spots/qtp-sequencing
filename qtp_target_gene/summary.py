@@ -15,6 +15,10 @@ from StringIO import StringIO
 
 
 from qiita_files.demux import stats as demux_stats
+
+# default matplotlib backend has dependency to X's XCB libraries.
+# use matplotlib.use('agg') or 'echo "backend: Agg" >> ~/matplotlibrc'
+# to use png-output backend on headless systems.
 import matplotlib.pyplot as plt
 
 
