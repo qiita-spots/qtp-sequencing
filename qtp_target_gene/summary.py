@@ -9,9 +9,9 @@
 from hashlib import md5
 from gzip import open as gopen
 from os.path import basename, join
-from urllib import quote
+from urllib.parse import quote
 from base64 import b64encode
-from StringIO import StringIO
+from io import StringIO
 
 
 from qiita_files.demux import stats as demux_stats
