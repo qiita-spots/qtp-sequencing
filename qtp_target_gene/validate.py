@@ -6,7 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
 
-from os.path import basename, join, splitext
+from os.path import basename, join, splitext, getsize
 from json import loads
 from shutil import copy
 from h5py import File
@@ -254,8 +254,17 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
         return False, None, error_msg
 
     filepaths = []
+    empty_files = []
     for fps_type, fps in files.items():
-        filepaths.extend([(fp, fps_type) for fp in fps])
+        for fp in fps:
+            if getsize(fp) <= 24:
+                empty_files.append(basename(fp))
+            filepaths.append((fp, fps_type))
+
+    if empty_files:
+        error_msg = "Some of the files are empty: %s" % ', '.join(empty_files)
+        return False, None, error_msg
+
     return True, [ArtifactInfo(None, 'per_sample_FASTQ', filepaths)], ""
 
 
