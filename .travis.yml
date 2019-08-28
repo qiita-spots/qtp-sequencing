@@ -25,7 +25,7 @@ install:
   - unzip qiita-dev.zip
   - nginx -c ${PWD}/qiita-dev/qiita_pet/nginx_example.conf
   - qiita-env make --no-load-ontologies
-  - conda deactivate
+  - source deactivate
   # installing this plugin
   - travis_retry conda create -q --yes -n qtp-target-gene python=3.6 pip
   - source activate qtp-target-gene
