@@ -10,7 +10,7 @@ before_install:
   - export PATH=/home/travis/miniconda3/bin:$PATH
   - conda update --yes conda
 install:
-  # installing Qiita in it's own environment python2.7
+  - 'echo "backend: Agg" >> ~/matplotlibrc'
   - travis_retry conda create -q --yes -n qiita python=3.6 pip libgfortran numpy nginx
   - source activate qiita
   - pip install sphinx sphinx-bootstrap-theme coveralls
