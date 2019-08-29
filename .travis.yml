@@ -1,51 +1,53 @@
+dist: xenial
 language: python
-sudo: required
-group: deprecated-2017Q4
+sudo: false
 env:
-  - PYTHON_VERSION=2.7
+  - PYTHON_VERSION=3.6
 before_install:
-  # lines to avoid matplotlib DISPLAY error
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
-  # regular install
   - wget http://repo.continuum.io/miniconda/Miniconda3-3.7.3-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda3/bin:$PATH
   - conda update --yes conda
 install:
-  # installing Qiita in it's own environment python2.7
-  - travis_retry conda create -q --yes -n qiita python=2.7 pip nose flake8
-    pyzmq networkx pyparsing natsort mock future libgfortran
-    'pandas>=0.18' 'scipy>0.13.0' 'numpy>=1.7' 'h5py>=2.3.1'
+  - travis_retry conda create -q --yes -n qiita python=3.6 pip libgfortran numpy nginx
   - source activate qiita
   - pip install sphinx sphinx-bootstrap-theme coveralls
-  - pip install https://github.com/biocore/qiita/archive/dev.zip --process-dependency-links
+  - pip install https://github.com/biocore/qiita/archive/dev.zip --no-binary redbiom
   # as we don't need redbiom we are going to use the default redis port
-  - sed 's/PORT = 7777/PORT = 6379/g' $HOME/miniconda3/envs/qiita/lib/python2.7/site-packages/qiita_core/support_files/config_test.cfg > config_test.cfg
+  - sed 's/PORT = 7777/PORT = 6379/g' $HOME/miniconda3/envs/qiita/lib/python3.6/site-packages/qiita_core/support_files/config_test.cfg > config_test.cfg
   - export QIITA_CONFIG_FP=${PWD}/config_test.cfg
-  - export QIITA_SERVER_CERT=$HOME/miniconda3/envs/qiita/lib/python2.7/site-packages/qiita_core/support_files/server.crt
+  - export QIITA_SERVER_CERT=$HOME/miniconda3/envs/qiita/lib/python3.6/site-packages/qiita_core/support_files/server.crt
+  # starting nginx
+  - mkdir /home/travis/miniconda3/envs/qiita/var/run/nginx/
+  - wget https://github.com/biocore/qiita/archive/dev.zip -O qiita-dev.zip
+  - unzip qiita-dev.zip
+  - nginx -c ${PWD}/qiita-dev/qiita_pet/nginx_example.conf
   - qiita-env make --no-load-ontologies
   - source deactivate
   # installing this plugin
-  - source activate qiita
+  - travis_retry conda create -q --yes -n qtp-target-gene python=2.7 pip
+  - source activate qtp-target-gene
   - pip install -U pip
-  - pip install https://github.com/qiita-spots/qiita_client/archive/master.zip
   - pip install coveralls flake8
-  - travis_retry pip install . --process-dependency-links
-  - configure_target_gene_types --env-script "source activate qiita" --server-cert $QIITA_SERVER_CERT
+  - travis_retry pip install .
+  - mkdir ~/.matplotlib
+  - 'echo "backend: Agg" >> ~/.matplotlib/matplotlibrc'
+  - configure_target_gene_types --env-script "source activate qtp-target-gene" --server-cert $QIITA_SERVER_CERT
 before_script:
   - source activate qiita
   - qiita plugins update
-  - qiita pet webserver --no-build-docs start &
+  - supervisord -c ${PWD}/qiita-dev/qiita_pet/supervisor_example.conf
+  - sleep 10 # give enough time to the webserver to start
+  - cat /tmp/supervisord.log
 script:
-  - source activate qiita
+  - source activate qtp-target-gene
   - sleep 5 # give enough time to the webserver to start
   - start_target_gene_types "https://localhost:21174" register ignored
   - nosetests --with-doctest --with-coverage -v --cover-package=qtp_target_gene
   - flake8 qtp_target_gene setup.py scripts
 addons:
-  postgresql: "9.3"
+  postgresql: "9.5"
 services:
   - redis-server
   - postgresql
