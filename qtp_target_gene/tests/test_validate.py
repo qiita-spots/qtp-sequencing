@@ -9,7 +9,9 @@
 from unittest import main
 from tempfile import mkdtemp, mkstemp
 from os import remove, close
-from os.path import exists, isdir, basename, splitext, join
+from os.path import exists, isdir, basename, splitext, join, dirname, abspath
+from inspect import currentframe, getfile
+from shutil import copyfile
 from shutil import rmtree
 from json import dumps
 
@@ -25,6 +27,11 @@ from qtp_target_gene.validate import (
 
 class ValidateTests(PluginTestCase):
     def setUp(self):
+        self.source_dir = join(dirname(abspath(getfile(currentframe()))),
+                               'test_data')
+        self.fastq = join(self.source_dir, 'file.fastq')
+        self.fastqqz = join(self.source_dir, 'file.fastq.gz')
+
         self._clean_up_files = []
 
     def tearDown(self):
@@ -216,24 +223,26 @@ class ValidateTests(PluginTestCase):
         self.assertItemsEqual(obs_error, error)
 
     def test_validate_per_sample_FASTQ_run_prefix(self):
+        f1 = join(self.source_dir, 'SKB2.640194_file.fastq')
+        f2 = join(self.source_dir, 'SKM4.640180_file.fastq')
+        f3 = join(self.source_dir, 'SKB3.640195_file.fastq')
+        raw_files = [f1, f2, f3]
+        for x in raw_files:
+            copyfile(self.fastq, x)
+            self._clean_up_files.append(x)
         prep_info = {"1.SKB2.640194": {"run_prefix": "prefix1"},
                      "1.SKM4.640180": {"run_prefix": "prefix2"},
                      "1.SKB3.640195": {"run_prefix": "prefix3"}}
-        files = {'raw_forward_seqs': ['/path/to/prefix1_file.fastq',
-                                      '/path/to/prefix2_file.fastq',
-                                      '/path/to/prefix3_file.fastq']}
+        files = {'raw_forward_seqs': raw_files}
         job_id = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
-
+        self.assertEqual(obs_error, "")
         self.assertTrue(obs_success)
-        filepaths = [('/path/to/prefix1_file.fastq', 'raw_forward_seqs'),
-                     ('/path/to/prefix2_file.fastq', 'raw_forward_seqs'),
-                     ('/path/to/prefix3_file.fastq', 'raw_forward_seqs')]
+        filepaths = [(x, 'raw_forward_seqs') for x in raw_files]
         exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
         self.assertEqual(obs_ainfo, exp)
-        self.assertEqual(obs_error, "")
 
     def test_validate_per_sample_FASTQ(self):
         prep_info = {"1.SKB2.640194": {"not_a_run_prefix": "prefix1"},
@@ -246,77 +255,90 @@ class ValidateTests(PluginTestCase):
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
+        self.assertEqual(obs_error, 'Some of the files are empty: '
+                         'SKB2.640194_file.fastq, SKM4.640180_file.fastq, '
+                         'SKB3.640195_file.fastq')
+        self.assertFalse(obs_success)
+
+        f1 = join(self.source_dir, 'SKB2.640194_file.fastq')
+        f2 = join(self.source_dir, 'SKM4.640180_file.fastq')
+        f3 = join(self.source_dir, 'SKB3.640195_file.fastq')
+        raw_files = [f1, f2, f3]
+        for x in raw_files:
+            copyfile(self.fastq, x)
+            self._clean_up_files.append(x)
+
+        prep_info = {"1.SKB2.640194": {"not_a_run_prefix": "prefix1"},
+                     "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
+                     "1.SKB3.640195": {"not_a_run_prefix": "prefix2"}}
+        files = {'raw_forward_seqs': raw_files}
+        job_id = self._create_template_and_job(
+            prep_info, files, "per_sample_FASTQ")
+        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
+            self.qclient, job_id, prep_info, files)
         self.assertTrue(obs_success)
-        filepaths = [('/path/to/SKB2.640194_file.fastq', 'raw_forward_seqs'),
-                     ('/path/to/SKM4.640180_file.fastq', 'raw_forward_seqs'),
-                     ('/path/to/SKB3.640195_file.fastq', 'raw_forward_seqs')]
+
+        filepaths = [(x, 'raw_forward_seqs') for x in raw_files]
         exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
 
     def test_validate_per_sample_FASTQ_preprocessed_fastq(self):
-        prep_info = {"1.SKB2.640194": {"not_a_run_prefix": "prefix1"},
-                     "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
-                     "1.SKB3.640195": {"not_a_run_prefix": "prefix2"}}
-        files = {'preprocessed_fastq': ['/path/to/SKB2.640194_file.fastq',
-                                        '/path/to/SKM4.640180_file.fastq',
-                                        '/path/to/SKB3.640195_file.fastq']}
-        job_id = self._create_template_and_job(
-            prep_info, files, "per_sample_FASTQ")
-        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
-            self.qclient, job_id, prep_info, files)
-        self.assertTrue(obs_success)
-        filepaths = [('/path/to/SKB2.640194_file.fastq', 'preprocessed_fastq'),
-                     ('/path/to/SKM4.640180_file.fastq', 'preprocessed_fastq'),
-                     ('/path/to/SKB3.640195_file.fastq', 'preprocessed_fastq')]
-        exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
-        self.assertEqual(obs_ainfo, exp)
-        self.assertEqual(obs_error, "")
+        f1 = join(self.source_dir, 'SKB2.640194_file.fastq')
+        f2 = join(self.source_dir, 'SKM4.640180_file.fastq')
+        f3 = join(self.source_dir, 'SKB3.640195_file.fastq')
+        copyfile(self.fastq, f1)
+        copyfile(self.fastq, f2)
+        copyfile(self.fastq, f3)
+        self._clean_up_files.append(f1)
+        self._clean_up_files.append(f2)
+        self._clean_up_files.append(f3)
 
         prep_info = {"1.SKB2.640194": {"not_a_run_prefix": "prefix1"},
                      "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
                      "1.SKB3.640195": {"not_a_run_prefix": "prefix2"}}
-        files = {'preprocessed_fastq': [
-            '/path/to/SKB2.640194_file_R1.fastq',
-            '/path/to/SKB2.640194_file_R2.fastq',
-            '/path/to/SKB2.640194_file_unmatched_R1.fastq',
-            '/path/to/SKB2.640194_file_unmatched_R2.fastq',
-            '/path/to/SKM4.640180_file_R1.fastq',
-            '/path/to/SKM4.640180_file_R2.fastq',
-            '/path/to/SKM4.640180_file_unmatched_R1.fastq',
-            '/path/to/SKM4.640180_file_unmatched_R2.fastq',
-            '/path/to/SKB3.640195_file_R1.fastq',
-            '/path/to/SKB3.640195_file_R2.fastq',
-            '/path/to/SKB3.640195_file_unmatched_R1.fastq',
-            '/path/to/SKB3.640195_file_unmatched_R2.fastq']}
+        files = {'preprocessed_fastq': [f1, f2, f3]}
         job_id = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
         self.assertTrue(obs_success)
-        filepaths = [
-            ('/path/to/SKB2.640194_file_R1.fastq', 'preprocessed_fastq'),
-            ('/path/to/SKB2.640194_file_R2.fastq', 'preprocessed_fastq'),
-            ('/path/to/SKB2.640194_file_unmatched_R1.fastq',
-             'preprocessed_fastq'),
-            ('/path/to/SKB2.640194_file_unmatched_R2.fastq',
-             'preprocessed_fastq'),
-            ('/path/to/SKM4.640180_file_R1.fastq', 'preprocessed_fastq'),
-            ('/path/to/SKM4.640180_file_R2.fastq', 'preprocessed_fastq'),
-            ('/path/to/SKM4.640180_file_unmatched_R1.fastq',
-             'preprocessed_fastq'),
-            ('/path/to/SKM4.640180_file_unmatched_R2.fastq',
-             'preprocessed_fastq'),
-            ('/path/to/SKB3.640195_file_R1.fastq', 'preprocessed_fastq'),
-            ('/path/to/SKB3.640195_file_R2.fastq', 'preprocessed_fastq'),
-            ('/path/to/SKB3.640195_file_unmatched_R1.fastq',
-             'preprocessed_fastq'),
-            ('/path/to/SKB3.640195_file_unmatched_R2.fastq',
-             'preprocessed_fastq')
-        ]
+        filepaths = [(f1, 'preprocessed_fastq'), (f2, 'preprocessed_fastq'),
+                     (f3, 'preprocessed_fastq')]
         exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
+
+        f1 = join(self.source_dir, 'SKB2.640194_file_R1.fastq')
+        f2 = join(self.source_dir, 'SKB2.640194_file_R2.fastq')
+        f3 = join(self.source_dir, 'SKB2.640194_file_unmatched_R1.fastq')
+        f4 = join(self.source_dir, 'SKB2.640194_file_unmatched_R2.fastq')
+        f5 = join(self.source_dir, 'SKM4.640180_file_R1.fastq')
+        f6 = join(self.source_dir, 'SKM4.640180_file_R2.fastq')
+        f7 = join(self.source_dir, 'SKM4.640180_file_unmatched_R1.fastq')
+        f8 = join(self.source_dir, 'SKM4.640180_file_unmatched_R2.fastq')
+        f9 = join(self.source_dir, 'SKB3.640195_file_R1.fastq')
+        fA = join(self.source_dir, 'SKB3.640195_file_R2.fastq')
+        fB = join(self.source_dir, 'SKB3.640195_file_unmatched_R1.fastq')
+        fC = join(self.source_dir, 'SKB3.640195_file_unmatched_R2.fastq')
+        raw_files = [f1, f2, f3, f4, f5, f6, f7, f8, f9, fA, fB, fC]
+        for x in raw_files:
+            copyfile(self.fastq, x)
+            self._clean_up_files.append(x)
+
+        prep_info = {"1.SKB2.640194": {"not_a_run_prefix": "prefix1"},
+                     "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
+                     "1.SKB3.640195": {"not_a_run_prefix": "prefix2"}}
+        files = {'preprocessed_fastq': raw_files}
+        job_id = self._create_template_and_job(
+            prep_info, files, "per_sample_FASTQ")
+        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
+            self.qclient, job_id, prep_info, files)
+        self.assertEqual(obs_error, "")
+        self.assertTrue(obs_success)
+        filepaths = [(x, 'preprocessed_fastq') for x in raw_files]
+        exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
+        self.assertEqual(obs_ainfo, exp)
 
     def test_validate_per_sample_FASTQ_error(self):
         # Filepath type not supported
