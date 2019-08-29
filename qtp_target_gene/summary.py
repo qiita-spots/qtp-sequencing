@@ -11,7 +11,8 @@ from gzip import open as gopen
 from os.path import basename, join
 from urllib.parse import quote
 from base64 import b64encode
-from io import StringIO
+from StringIO import StringIO
+from html import escape
 
 from qiita_files.demux import stats as demux_stats
 import matplotlib
@@ -122,11 +123,11 @@ def _summary_not_demultiplexed(artifact_type, filepaths):
                 # not raise an error until you try to read
                 try:
                     with gopen(fp, 'r') as fin:
-                        header = [line for line, _ in zip(
+                        header = [escape(line) for line, _ in zip(
                             fin, xrange(LINES_TO_READ_FOR_HEAD))]
                 except IOError:
                     with open(fp, 'r') as fin:
-                        header = [line for line, _ in zip(
+                        header = [escape(line) for line, _ in zip(
                             fin, xrange(LINES_TO_READ_FOR_HEAD))]
             filename = basename(fp)
             artifact_information.append(
@@ -136,7 +137,8 @@ def _summary_not_demultiplexed(artifact_type, filepaths):
             if header:
                 artifact_information.append(
                     "<p style=\"font-family:'Courier New', Courier, monospace;"
-                    "font-size:10;\">%s</p><hr/>" % ("<br/>".join(header)))
+                    "font-size:10;\">%s</p><hr/>" % (
+                        "<br/>".join(header)))
 
     return artifact_information
 
