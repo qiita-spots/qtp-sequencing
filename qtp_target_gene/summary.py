@@ -15,8 +15,11 @@ from io import StringIO
 
 
 from qiita_files.demux import stats as demux_stats
+import matplotlib
 import matplotlib.pyplot as plt
 
+
+matplotlib.use('Agg')
 
 FILEPATH_TYPE_TO_NOT_SHOW_HEAD = ['SFF']
 LINES_TO_READ_FOR_HEAD = 10
