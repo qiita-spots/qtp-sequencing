@@ -261,8 +261,8 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
                 fp_size = getsize(fp)
             except OSError:
                 fp_size = 0
-            # 24 is the size of a gzip empty file
-            if fp_size <= 24:
+            # 62 is the size of a gzip empty files that we generate
+            if fp_size <= 62:
                 empty_files.append(basename(fp))
             filepaths.append((fp, fps_type))
 
