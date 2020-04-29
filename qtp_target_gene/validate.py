@@ -12,6 +12,7 @@ from shutil import copy
 from h5py import File
 
 from qiita_client import ArtifactInfo
+from qiita_client.util import system_call
 from qiita_files.util import open_file
 from qiita_files.demux import to_hdf5, to_ascii_file
 
@@ -362,10 +363,24 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
     if not fastq_fp:
         fastq_fp = join(out_dir, "%s.fastq" % name)
         to_ascii_file(demux_fp, fastq_fp, out_format='fastq')
+        std_out, std_err, return_value = system_call('gz %s' % fastq_fp)
+        if return_value != 0:
+            error_msg = ("Error during %s:\nStd out: %s\nStd err: %s"
+                         "\n\nCommand run was:\n%s"
+                         % (sys_msg, std_out, std_err, xz_cmd))
+            return False, None, error_msg
+        fastq_fp += '.gz'
 
     if not fasta_fp:
         fasta_fp = join(out_dir, "%s.fasta" % name)
         to_ascii_file(demux_fp, fasta_fp, out_format='fasta')
+        std_out, std_err, return_value = system_call('gz %s' % fasta_fp)
+        if return_value != 0:
+            error_msg = ("Error during %s:\nStd out: %s\nStd err: %s"
+                         "\n\nCommand run was:\n%s"
+                         % (sys_msg, std_out, std_err, xz_cmd))
+            return False, None, error_msg
+        fasta_fp += '.gz'
 
     filepaths = [(fastq_fp, 'preprocessed_fastq'),
                  (fasta_fp, 'preprocessed_fasta'),
