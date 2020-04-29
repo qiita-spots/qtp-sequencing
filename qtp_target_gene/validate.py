@@ -363,7 +363,7 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
     if not fastq_fp:
         fastq_fp = join(out_dir, "%s.fastq" % name)
         to_ascii_file(demux_fp, fastq_fp, out_format='fastq')
-        gz_cmd = 'gz %s' % fastq_fp
+        gz_cmd = 'gzip %s' % fastq_fp
         std_out, std_err, return_value = system_call(gz_cmd)
         if return_value != 0:
             error_msg = ("Std out: %s\nStd err: %s"
@@ -375,7 +375,7 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
     if not fasta_fp:
         fasta_fp = join(out_dir, "%s.fasta" % name)
         to_ascii_file(demux_fp, fasta_fp, out_format='fasta')
-        gz_cmd = 'gz %s' % fasta_fp
+        gz_cmd = 'gzip %s' % fasta_fp
         std_out, std_err, return_value = system_call(gz_cmd)
         if return_value != 0:
             error_msg = ("Std out: %s\nStd err: %s"
