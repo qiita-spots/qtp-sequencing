@@ -363,22 +363,24 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
     if not fastq_fp:
         fastq_fp = join(out_dir, "%s.fastq" % name)
         to_ascii_file(demux_fp, fastq_fp, out_format='fastq')
-        std_out, std_err, return_value = system_call('gz %s' % fastq_fp)
+        gz_cmd = 'gz %s' % fastq_fp
+        std_out, std_err, return_value = system_call(gz_cmd)
         if return_value != 0:
-            error_msg = ("Error during %s:\nStd out: %s\nStd err: %s"
+            error_msg = ("Std out: %s\nStd err: %s"
                          "\n\nCommand run was:\n%s"
-                         % (sys_msg, std_out, std_err, xz_cmd))
+                         % (std_out, std_err, gz_cmd))
             return False, None, error_msg
         fastq_fp += '.gz'
 
     if not fasta_fp:
         fasta_fp = join(out_dir, "%s.fasta" % name)
         to_ascii_file(demux_fp, fasta_fp, out_format='fasta')
-        std_out, std_err, return_value = system_call('gz %s' % fasta_fp)
+        gz_cmd = 'gz %s' % fasta_fp
+        std_out, std_err, return_value = system_call(gz_cmd)
         if return_value != 0:
-            error_msg = ("Error during %s:\nStd out: %s\nStd err: %s"
+            error_msg = ("Std out: %s\nStd err: %s"
                          "\n\nCommand run was:\n%s"
-                         % (sys_msg, std_out, std_err, xz_cmd))
+                         % (std_out, std_err, gz_cmd))
             return False, None, error_msg
         fasta_fp += '.gz'
 
