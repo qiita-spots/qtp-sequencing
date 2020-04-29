@@ -10,6 +10,7 @@ from os.path import basename, join, splitext, getsize
 from json import loads
 from shutil import copy
 from h5py import File
+from zipfile import is_zipfile
 
 from qiita_client import ArtifactInfo
 from qiita_client.util import system_call
@@ -22,6 +23,35 @@ FILEPATH_TYPE_DICT = {
     'FASTA': ({'raw_fasta', 'raw_qual'}, set()),
     'FASTA_Sanger': ({'raw_fasta'}, set()),
 }
+
+
+def _gzip_file(filepath):
+    """gzip the given filepath if needed
+
+    Parameters
+    ----------
+    filepath : string
+        The filepath to verify or compress
+
+
+    Returns
+    -------
+    str
+        the new gz filepath, None if error
+    str
+        the error, None if success
+    """
+    error = None
+    return_fp = None
+    if not is_zipfile(filepath):
+        gz_cmd = 'gzip %s' % filepath
+        std_out, std_err, return_value = system_call(gz_cmd)
+        if return_value != 0:
+            error = ("Std out: %s\nStd err: %s\n\nCommand run was:\n%s"
+                     % (std_out, std_err, gz_cmd))
+        else:
+            return_fp = '%s.gz' % filepath
+    return error, return_fp
 
 
 def _validate_multiple(qclient, job_id, prep_info, files, atype):
@@ -131,7 +161,11 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype):
     # Everything is ok
     filepaths = []
     for fps_type, fps in files.items():
-        filepaths.extend([(fp, fps_type) for fp in fps])
+        for fp in fps:
+            fp, error_msg = _gzip_file(fp)
+            if error_msg is not None:
+                return False, None, error_msg
+            filepaths.append((fp, fps_type))
 
     return True, [ArtifactInfo(None, atype, filepaths)], ""
 
@@ -265,6 +299,11 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
             # 62 is the size of a gzip empty files that we generate
             if fp_size <= 62:
                 empty_files.append(basename(fp))
+
+            fp, error_msg = _gzip_file(fp)
+            if error_msg is not None:
+                return False, None, error_msg
+
             filepaths.append((fp, fps_type))
 
     if empty_files:
@@ -363,26 +402,16 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
     if not fastq_fp:
         fastq_fp = join(out_dir, "%s.fastq" % name)
         to_ascii_file(demux_fp, fastq_fp, out_format='fastq')
-        gz_cmd = 'gzip %s' % fastq_fp
-        std_out, std_err, return_value = system_call(gz_cmd)
-        if return_value != 0:
-            error_msg = ("Std out: %s\nStd err: %s"
-                         "\n\nCommand run was:\n%s"
-                         % (std_out, std_err, gz_cmd))
+        fastq_fp, error_msg = _gzip_file(fastq_fp)
+        if error_msg is not None:
             return False, None, error_msg
-        fastq_fp += '.gz'
 
     if not fasta_fp:
         fasta_fp = join(out_dir, "%s.fasta" % name)
         to_ascii_file(demux_fp, fasta_fp, out_format='fasta')
-        gz_cmd = 'gzip %s' % fasta_fp
-        std_out, std_err, return_value = system_call(gz_cmd)
-        if return_value != 0:
-            error_msg = ("Std out: %s\nStd err: %s"
-                         "\n\nCommand run was:\n%s"
-                         % (std_out, std_err, gz_cmd))
+        fasta_fp, error_msg = _gzip_file(fasta_fp)
+        if error_msg is not None:
             return False, None, error_msg
-        fasta_fp += '.gz'
 
     filepaths = [(fastq_fp, 'preprocessed_fastq'),
                  (fasta_fp, 'preprocessed_fasta'),
