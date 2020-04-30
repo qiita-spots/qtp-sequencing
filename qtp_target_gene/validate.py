@@ -24,11 +24,11 @@ FILEPATH_TYPE_DICT = {
     'FASTA_Sanger': ({'raw_fasta'}, set()),
 }
 
-MUST_GZ = [
+MUST_GZ = {
     # raw input files: FASTQ, per_sample_FASTQ
     'raw_forward_seqs', 'raw_barcodes', 'raw_reverse_seqs', 'raw_fasta',
     # preprocessed files: demultiplexed, trimmed
-    'preprocessed_fastq', 'preprocessed_fasta']
+    'preprocessed_fastq', 'preprocessed_fasta'}
 
 
 def _gzip_file(filepath, test=False):
@@ -39,7 +39,7 @@ def _gzip_file(filepath, test=False):
     filepath : string
         The filepath to verify or compress
     test : bolean
-        If True do not compress but change the filename
+        If True do not compress but change the filename, used for unit testing
 
     Returns
     -------
@@ -81,7 +81,7 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype, test=False):
     atype: str
         The type of the artifact
     test: bolean, optional
-        If True this is being called by a tests
+        If True this is being called by a test
 
     Returns
     -------
@@ -198,7 +198,7 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files, test=False):
     files : dict of {str: list of str}
         The files to add to the new artifact, keyed by filepath type
     test: bolean, optional
-        If True this is being called by a tests
+        If True this is being called by a test
 
     Returns
     -------
