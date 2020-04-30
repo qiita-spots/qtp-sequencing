@@ -10,7 +10,7 @@ before_install:
   - export PATH=/home/travis/miniconda3/bin:$PATH
   - conda update --yes conda
 install:
-  - travis_retry conda create -q --yes -n qiita python=3.6 pip libgfortran numpy nginx
+  - travis_retry conda create -q --yes -n qiita python=3.6 pip libgfortran numpy nginx cython
   - source activate qiita
   - pip install sphinx sphinx-bootstrap-theme coveralls
   - pip install https://github.com/biocore/qiita/archive/dev.zip --no-binary redbiom
@@ -43,8 +43,7 @@ before_script:
 script:
   - source activate qtp-target-gene
   - sleep 5 # give enough time to the webserver to start
-  - start_target_gene_types "https://localhost:21174" register ignored
-  - nosetests --with-doctest --with-coverage -v --cover-package=qtp_target_gene
+  - travis_wait 40 nosetests --with-doctest --with-coverage -v --cover-package=qtp_target_gene
   - flake8 qtp_target_gene setup.py scripts
 addons:
   postgresql: "9.5"

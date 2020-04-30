@@ -74,14 +74,14 @@ class ValidateTests(PluginTestCase):
         job_id = self._create_template_and_job(prep_info, files, atype)
 
         obs_success, obs_ainfo, obs_error = _validate_multiple(
-            self.qclient, job_id, prep_info, files, atype)
+            self.qclient, job_id, prep_info, files, atype, True)
 
         self.assertTrue(obs_success)
         filepaths = [
-            ('/path/to/prefix1_b.fastq', 'raw_barcodes'),
-            ('/path/to/prefix2_b.fastq', 'raw_barcodes'),
-            ('/path/to/prefix1.fastq', 'raw_forward_seqs'),
-            ('/path/to/prefix2.fastq', 'raw_forward_seqs')]
+            ('/path/to/prefix1_b.fastq.gz', 'raw_barcodes'),
+            ('/path/to/prefix2_b.fastq.gz', 'raw_barcodes'),
+            ('/path/to/prefix1.fastq.gz', 'raw_forward_seqs'),
+            ('/path/to/prefix2.fastq.gz', 'raw_forward_seqs')]
         exp = [ArtifactInfo(None, "FASTQ", filepaths)]
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
@@ -96,12 +96,12 @@ class ValidateTests(PluginTestCase):
         job_id = self._create_template_and_job(prep_info, files, atype)
 
         obs_success, obs_ainfo, obs_error = _validate_multiple(
-            self.qclient, job_id, prep_info, files, atype)
+            self.qclient, job_id, prep_info, files, atype, True)
 
         self.assertTrue(obs_success)
         filepaths = [
-            ('/path/to/prefix1_b.fastq', 'raw_barcodes'),
-            ('/path/to/prefix1.fastq', 'raw_forward_seqs')]
+            ('/path/to/prefix1_b.fastq.gz', 'raw_barcodes'),
+            ('/path/to/prefix1.fastq.gz', 'raw_forward_seqs')]
         exp = [ArtifactInfo(None, atype, filepaths)]
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
@@ -240,7 +240,7 @@ class ValidateTests(PluginTestCase):
             self.qclient, job_id, prep_info, files)
         self.assertEqual(obs_error, "")
         self.assertTrue(obs_success)
-        filepaths = [(x, 'raw_forward_seqs') for x in raw_files]
+        filepaths = [('%s.gz' % x, 'raw_forward_seqs') for x in raw_files]
         exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
         self.assertEqual(obs_ainfo, exp)
 
@@ -254,7 +254,7 @@ class ValidateTests(PluginTestCase):
         job_id = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
-            self.qclient, job_id, prep_info, files)
+            self.qclient, job_id, prep_info, files, True)
         self.assertEqual(obs_error, 'Some of the files are empty: '
                          'SKB2.640194_file.fastq, SKM4.640180_file.fastq, '
                          'SKB3.640195_file.fastq')
@@ -278,7 +278,7 @@ class ValidateTests(PluginTestCase):
             self.qclient, job_id, prep_info, files)
         self.assertTrue(obs_success)
 
-        filepaths = [(x, 'raw_forward_seqs') for x in raw_files]
+        filepaths = [('%s.gz' % x, 'raw_forward_seqs') for x in raw_files]
         exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
@@ -303,8 +303,9 @@ class ValidateTests(PluginTestCase):
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
         self.assertTrue(obs_success)
-        filepaths = [(f1, 'preprocessed_fastq'), (f2, 'preprocessed_fastq'),
-                     (f3, 'preprocessed_fastq')]
+        filepaths = [(f1 + '.gz', 'preprocessed_fastq'),
+                     (f2 + '.gz', 'preprocessed_fastq'),
+                     (f3 + '.gz', 'preprocessed_fastq')]
         exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
@@ -336,7 +337,7 @@ class ValidateTests(PluginTestCase):
             self.qclient, job_id, prep_info, files)
         self.assertEqual(obs_error, "")
         self.assertTrue(obs_success)
-        filepaths = [(x, 'preprocessed_fastq') for x in raw_files]
+        filepaths = [('%s.gz' % x, 'preprocessed_fastq') for x in raw_files]
         exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
         self.assertEqual(obs_ainfo, exp)
 
@@ -549,8 +550,8 @@ class ValidateTests(PluginTestCase):
             self.qclient, job_id, prep_info, out_dir, demux_fp)
         self.assertTrue(obs_success)
         name = splitext(basename(demux_fp))[0]
-        exp_fastq_fp = join(out_dir, "%s.fastq" % name)
-        exp_fasta_fp = join(out_dir, "%s.fasta" % name)
+        exp_fastq_fp = join(out_dir, "%s.fastq.gz" % name)
+        exp_fasta_fp = join(out_dir, "%s.fasta.gz" % name)
         exp_demux_fp = join(out_dir, basename(demux_fp))
         filepaths = [
             (exp_fastq_fp, 'preprocessed_fastq'),
@@ -599,8 +600,8 @@ class ValidateTests(PluginTestCase):
             self.qclient, job_id, prep_info, out_dir, demux_fp)
         self.assertTrue(obs_success)
         name = splitext(basename(demux_fp))[0]
-        exp_fastq_fp = join(out_dir, "%s.fastq" % name)
-        exp_fasta_fp = join(out_dir, "%s.fasta" % name)
+        exp_fastq_fp = join(out_dir, "%s.fastq.gz" % name)
+        exp_fasta_fp = join(out_dir, "%s.fasta.gz" % name)
         exp_demux_fp = join(out_dir, basename(demux_fp))
         filepaths = [
             (exp_fastq_fp, 'preprocessed_fastq'),

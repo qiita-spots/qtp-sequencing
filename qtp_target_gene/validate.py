@@ -10,8 +10,10 @@ from os.path import basename, join, splitext, getsize
 from json import loads
 from shutil import copy
 from h5py import File
+from zipfile import is_zipfile
 
 from qiita_client import ArtifactInfo
+from qiita_client.util import system_call
 from qiita_files.util import open_file
 from qiita_files.demux import to_hdf5, to_ascii_file
 
@@ -22,8 +24,48 @@ FILEPATH_TYPE_DICT = {
     'FASTA_Sanger': ({'raw_fasta'}, set()),
 }
 
+MUST_GZ = {
+    # raw input files: FASTQ, per_sample_FASTQ
+    'raw_forward_seqs', 'raw_barcodes', 'raw_reverse_seqs', 'raw_fasta',
+    # preprocessed files: demultiplexed, trimmed
+    'preprocessed_fastq', 'preprocessed_fasta'}
 
-def _validate_multiple(qclient, job_id, prep_info, files, atype):
+
+def _gzip_file(filepath, test=False):
+    """gzip the given filepath if needed
+
+    Parameters
+    ----------
+    filepath : string
+        The filepath to verify or compress
+    test : bolean
+        If True do not compress but change the filename, used for unit testing
+
+    Returns
+    -------
+    str
+        the new gz filepath, None if error
+    str
+        the error, None if success
+    """
+    error = None
+    return_fp = None
+    if test:
+        return_fp = '%s.gz' % filepath
+    else:
+        if not is_zipfile(filepath):
+            gz_cmd = 'gzip -f %s' % filepath
+
+            std_out, std_err, return_value = system_call(gz_cmd)
+            if return_value != 0 and not test:
+                error = ("Std out: %s\nStd err: %s\n\nCommand run was:\n%s"
+                         % (std_out, std_err, gz_cmd))
+            else:
+                return_fp = '%s.gz' % filepath
+    return return_fp, error
+
+
+def _validate_multiple(qclient, job_id, prep_info, files, atype, test=False):
     """Validate and fix a new 'SFF', 'FASTQ', 'FASTA' or 'FASTA_Sanger' artifact
 
     Parameters
@@ -38,6 +80,8 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype):
         The files to add to the new artifact, keyed by filepath type
     atype: str
         The type of the artifact
+    test: bolean, optional
+        If True this is being called by a test
 
     Returns
     -------
@@ -130,12 +174,17 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype):
     # Everything is ok
     filepaths = []
     for fps_type, fps in files.items():
-        filepaths.extend([(fp, fps_type) for fp in fps])
+        for fp in fps:
+            if fps_type in MUST_GZ:
+                fp, error_msg = _gzip_file(fp, test)
+                if error_msg is not None:
+                    return False, None, error_msg
+            filepaths.append((fp, fps_type))
 
     return True, [ArtifactInfo(None, atype, filepaths)], ""
 
 
-def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
+def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files, test=False):
     """Validate and fix a new 'per_sample_FASTQ' artifact
 
     Parameters
@@ -148,6 +197,8 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
         The prep information keyed by sample id
     files : dict of {str: list of str}
         The files to add to the new artifact, keyed by filepath type
+    test: bolean, optional
+        If True this is being called by a test
 
     Returns
     -------
@@ -264,6 +315,12 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files):
             # 62 is the size of a gzip empty files that we generate
             if fp_size <= 62:
                 empty_files.append(basename(fp))
+
+            if fps_type in MUST_GZ:
+                fp, error_msg = _gzip_file(fp, test)
+                if error_msg is not None:
+                    return False, None, error_msg
+
             filepaths.append((fp, fps_type))
 
     if empty_files:
@@ -362,10 +419,16 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
     if not fastq_fp:
         fastq_fp = join(out_dir, "%s.fastq" % name)
         to_ascii_file(demux_fp, fastq_fp, out_format='fastq')
+        fastq_fp, error_msg = _gzip_file(fastq_fp)
+        if error_msg is not None:
+            return False, None, error_msg
 
     if not fasta_fp:
         fasta_fp = join(out_dir, "%s.fasta" % name)
         to_ascii_file(demux_fp, fasta_fp, out_format='fasta')
+        fasta_fp, error_msg = _gzip_file(fasta_fp)
+        if error_msg is not None:
+            return False, None, error_msg
 
     filepaths = [(fastq_fp, 'preprocessed_fastq'),
                  (fasta_fp, 'preprocessed_fasta'),
