@@ -10,7 +10,7 @@ from os.path import basename, join, splitext, getsize
 from json import loads
 from shutil import copy
 from h5py import File
-from zipfile import is_zipfile
+from gzip import open as gopen
 
 from qiita_client import ArtifactInfo
 from qiita_client.util import system_call
@@ -53,7 +53,15 @@ def _gzip_file(filepath, test=False):
     if test:
         return_fp = '%s.gz' % filepath
     else:
-        if not is_zipfile(filepath):
+        is_gzip = False
+        try:
+            with gopen(filepath, 'rb') as f:
+                f.read(1)
+            is_gzip = True
+        except (OSError, IOError):
+            pass
+
+        if not is_gzip:
             gz_cmd = 'gzip -f %s' % filepath
 
             std_out, std_err, return_value = system_call(gz_cmd)
