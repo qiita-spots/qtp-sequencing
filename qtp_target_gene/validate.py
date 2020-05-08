@@ -49,7 +49,7 @@ def _gzip_file(filepath, test=False):
         the error, None if success
     """
     error = None
-    return_fp = None
+    return_fp = filepath
     if test:
         return_fp = '%s.gz' % filepath
     else:
