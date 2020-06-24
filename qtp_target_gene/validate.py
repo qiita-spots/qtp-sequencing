@@ -62,7 +62,7 @@ def _gzip_file(filepath, test=False):
             pass
 
         if not is_gzip:
-            gz_cmd = 'pigz -p 5 -c {1} > {1}.gz'.format(filepath)
+            gz_cmd = 'pigz -p 5 -c {0} > {0}.gz'.format(filepath)
 
             std_out, std_err, return_value = system_call(gz_cmd)
             if return_value != 0 and not test:
