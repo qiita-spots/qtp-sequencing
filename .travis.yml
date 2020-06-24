@@ -26,7 +26,7 @@ install:
   - qiita-env make --no-load-ontologies
   - source deactivate
   # installing this plugin
-  - travis_retry conda create -q --yes -n qtp-target-gene python=2.7 pip
+  - travis_retry conda create -q --yes -n qtp-target-gene python=2.7 pip pigz
   - source activate qtp-target-gene
   - pip install -U pip
   - pip install coveralls flake8

@@ -62,7 +62,7 @@ def _gzip_file(filepath, test=False):
             pass
 
         if not is_gzip:
-            gz_cmd = 'gzip -f %s' % filepath
+            gz_cmd = 'pigz -p 5 -c {1} > {1}.gz'.format(filepath)
 
             std_out, std_err, return_value = system_call(gz_cmd)
             if return_value != 0 and not test:
@@ -321,7 +321,7 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files, test=False):
             except OSError:
                 fp_size = 0
             # 62 is the size of a gzip empty files that we generate
-            if fp_size <= 62:
+            if fp_size <= 100:
                 empty_files.append(basename(fp))
 
             if fps_type in MUST_GZ:
