@@ -46,7 +46,7 @@ setup(name='qtp-target-gene',
       extras_require={'test': ["nose >= 0.10.1", "pep8"]},
       install_requires=['click >= 3.3', 'matplotlib', 'h5py',
                         'qiita-files @ https://github.com/'
-                        'qiita-spots/qiita-files/archive/master.zip',
+                        'qiita-spots/qiita-files/archive/v2020.05.zip',
                         'qiita_client @ https://github.com/qiita-spots/'
                         'qiita_client/archive/master.zip'],
       classifiers=classifiers)
