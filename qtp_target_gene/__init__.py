@@ -22,7 +22,7 @@ artifact_types = [
                                            ('raw_reverse_seqs', False),
                                            ('raw_barcodes', True)]),
     QiitaArtifactType('FASTA', 'Raw fasta files', False, False, True,
-                      [('raw_fasta', True), ('raw_qual', True)]),
+                      [('raw_fasta', True), ('raw_qual', False)]),
     QiitaArtifactType('per_sample_FASTQ', 'Raw per sample FASTQ files', False,
                       False, True, [('raw_forward_seqs', True),
                                     ('raw_reverse_seqs', False)]),

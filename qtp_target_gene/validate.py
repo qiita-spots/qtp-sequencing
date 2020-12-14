@@ -20,7 +20,7 @@ from qiita_files.demux import to_hdf5, to_ascii_file
 FILEPATH_TYPE_DICT = {
     'SFF': ({'raw_sff'}, set()),
     'FASTQ': ({'raw_forward_seqs', 'raw_barcodes'}, {'raw_reverse_seqs'}),
-    'FASTA': ({'raw_fasta', 'raw_qual'}, set()),
+    'FASTA': ({'raw_fasta'}, {'raw_qual'}),
     'FASTA_Sanger': ({'raw_fasta'}, set()),
 }
 
