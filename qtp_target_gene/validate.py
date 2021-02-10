@@ -7,6 +7,7 @@
 # -----------------------------------------------------------------------------
 
 from os.path import basename, join, splitext, getsize
+from os import remove
 from json import loads
 from shutil import copy
 from h5py import File
@@ -69,6 +70,8 @@ def _gzip_file(filepath, test=False):
                 error = ("Std out: %s\nStd err: %s\n\nCommand run was:\n%s"
                          % (std_out, std_err, gz_cmd))
             else:
+                # removing non gz file
+                remove(filepath)
                 return_fp = '%s.gz' % filepath
     return return_fp, error
 

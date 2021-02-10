@@ -309,6 +309,10 @@ class ValidateTests(PluginTestCase):
         exp = [ArtifactInfo(None, "per_sample_FASTQ", filepaths)]
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
+        # making sure the regular fastq files doesn't exist anymore but
+        # the gz do
+        self.assertFalse(exists(f1))
+        self.assertTrue(exists(f1 + '.gz'))
 
         f1 = join(self.source_dir, 'SKB2.640194_file_R1.fastq')
         f2 = join(self.source_dir, 'SKB2.640194_file_R2.fastq')
