@@ -11,7 +11,7 @@ from gzip import open as gopen
 from os.path import basename, join
 from urllib.parse import quote
 from base64 import b64encode
-from StringIO import StringIO
+from io import StringIO
 from html import escape
 
 from qiita_files.demux import stats as demux_stats
