@@ -76,24 +76,14 @@ jobs:
       - name: Install plugins
         shell: bash -l {0}
         run: |
-          conda config --add channels anaconda
-          conda config --add channels bioconda
-          conda create -q --yes -n qp-spades python=3.6 cmake clang zlib flash spades quast
-          conda activate qp-spades
-
-          # making sure the installed versions haven't changed
-          flash_version=`flash --version`
-          spades_version=`spades.py --version`
-          quast_version=`quast --version`
-          if [[ $flash_version != *"v1.2.11"* ]]; then echo "wrong flash version", $flash_version; exit 1; fi
-          if [[ $spades_version != *"v3.15.2"* ]]; then echo "wrong spades version", $spades_version; exit 1; fi
-          if [[ $quast_version != *"v5.0.2"* ]]; then echo "wrong quast version", $quast_version; exit 1; fi
+          conda create -q --yes -n qtp-sequencing python=3.6 pip pigz
+          conda activate qtp-sequencing
 
           export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/server.crt
           export QIITA_CONFIG_FP=`pwd`/qiita-dev/qiita_core/support_files/config_test.cfg
           pip install -U pip
           pip install .
-          configure_qp_spades --env-script "source /home/runner/.profile; conda activate qp-spades" --server-cert $QIITA_SERVER_CERT
+          configure_qtp_sequencing --env-script "source /home/runner/.profile; conda activate qtp-sequencing" --server-cert $QIITA_SERVER_CERT
 
       - name: Starting services
         shell: bash -l {0}
