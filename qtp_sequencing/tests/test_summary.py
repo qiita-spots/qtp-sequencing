@@ -16,7 +16,7 @@ from json import dumps
 from qiita_client.testing import PluginTestCase
 from gzip import GzipFile
 
-from qtp_target_gene.summary import (
+from qtp_sequencing.summary import (
     generate_html_summary, _summary_demultiplexed, _summary_not_demultiplexed)
 
 

@@ -124,11 +124,11 @@ def _summary_not_demultiplexed(artifact_type, filepaths):
                 try:
                     with gopen(fp, 'r') as fin:
                         header = [escape(line) for line, _ in zip(
-                            fin, xrange(LINES_TO_READ_FOR_HEAD))]
+                            fin, range(LINES_TO_READ_FOR_HEAD))]
                 except IOError:
                     with open(fp, 'r') as fin:
                         header = [escape(line) for line, _ in zip(
-                            fin, xrange(LINES_TO_READ_FOR_HEAD))]
+                            fin, range(LINES_TO_READ_FOR_HEAD))]
             filename = basename(fp)
             artifact_information.append(
                 "<h3>%s (%s)</h3>" % (filename, fps_type))

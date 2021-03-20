@@ -20,7 +20,7 @@ from qiita_client.testing import PluginTestCase
 from h5py import File
 from qiita_files.demux import to_hdf5
 
-from qtp_target_gene.validate import (
+from qtp_sequencing.validate import (
     _validate_multiple, _validate_per_sample_FASTQ, _validate_demux_file,
     _validate_demultiplexed, validate)
 

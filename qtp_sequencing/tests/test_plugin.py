@@ -17,7 +17,7 @@ from time import sleep
 
 from qiita_client.testing import PluginTestCase
 
-from qtp_target_gene import plugin
+from qtp_sequencing import plugin
 
 
 class PluginTests(PluginTestCase):
