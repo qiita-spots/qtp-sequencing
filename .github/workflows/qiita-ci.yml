@@ -101,7 +101,7 @@ jobs:
           export NGINX_FILE=`pwd`/qiita-dev/qiita_pet/nginx_example.conf
           export NGINX_FILE_NEW=`pwd`/qiita-dev/qiita_pet/nginx_example_local.conf
           sed "s#/home/runner/work/qiita/qiita/qiita_core/support_files/server.crt#${QIITA_SERVER_CERT}#g" ${NGINX_FILE} > ${NGINX_FILE_NEW}
-          ls ${NGINX_FILE} ${NGINX_FILE_NEW}
+          cat ${NGINX_FILE_NEW}
           nginx -c ${NGINX_FILE_NEW}
 
           echo "3. Setting up qiita"
