@@ -97,6 +97,8 @@ jobs:
           redis-server --daemonize yes --port 7777
 
           echo "2. Setting up nginx"
+          echo ${CONDA_PREFIX}
+          ls ${CONDA_PREFIX}
           mkdir -p ${CONDA_PREFIX}/var/run/nginx/
           export NGINX_FILE = `pwd`/qiita-dev/qiita_pet/nginx_example.conf
           export NGINX_FILE_NEW = `pwd`/qiita-dev/qiita_pet/nginx_example_local.conf
