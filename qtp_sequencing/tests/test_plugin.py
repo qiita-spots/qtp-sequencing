@@ -43,7 +43,7 @@ class PluginTests(PluginTestCase):
 
     def test_plugin_summary(self):
         artifact_id = 1
-        data = {'command': dumps(['Target Gene type', '0.1.0',
+        data = {'command': dumps(['Sequencing Data Type', '2021.03',
                                   'Generate HTML summary']),
                 'parameters': dumps({'input_data': artifact_id}),
                 'status': 'running'}
@@ -89,7 +89,8 @@ class PluginTests(PluginTestCase):
                       'files': dumps(files),
                       'artifact_type': atype}
 
-        data = {'command': dumps(['Target Gene type', '0.1.0', 'Validate']),
+        data = {'command': dumps(
+            ['Sequencing Data Type', '2021.03', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
@@ -104,7 +105,8 @@ class PluginTests(PluginTestCase):
         parameters = {'template': 1,
                       'files': dumps({'log': ['/path/to/file1.log']}),
                       'artifact_type': "Demultiplexed"}
-        data = {'command': dumps(['Target Gene type', '0.1.0', 'Validate']),
+        data = {'command': dumps(
+            ['Sequencing Data Type', '2021.03', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
@@ -164,7 +166,7 @@ CCCCCCCCCFFFGGGGGGGGGGGGGHHHHHHGGGGGHHHHGGGGGHHGGGGGHHHHHHHHGGGGHHHGGGGGGGGGHH\
 GGGHGHHHHHHHHHHHHHHHHHGHHHGGGGGGHHHHHHHHGGHGGHHGHHHHHHHHHFHHHHHHHHHHHHHHHGHHHG\
 HHGEGGDGGFFFGGGFGGGGGGGGGGGFFFFFFFDFFFAFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFEFFFF\
 FFFFFB:FFFFFFFFFF
-"""
+""".encode()
 
 BARCODES = """@MISEQ03:123:000000000-A40KM:1:1101:14149:1572 1:N:0:TCCACAGGAGT
 TCCACAGGAGT
@@ -182,7 +184,7 @@ AABCCFFFFFF
 TCCACAGGAGT
 +
 CCCCCCCCCFF
-"""
+""".encode()
 
 if __name__ == '__main__':
     main()

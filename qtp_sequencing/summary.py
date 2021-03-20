@@ -26,7 +26,7 @@ LINES_TO_READ_FOR_HEAD = 10
 
 
 def generate_html_summary(qclient, job_id, parameters, out_dir):
-    """Generates the HTML summary of a target gene type artifact
+    """Generates the HTML summary of a sequencing type artifact
 
     Parameters
     ----------

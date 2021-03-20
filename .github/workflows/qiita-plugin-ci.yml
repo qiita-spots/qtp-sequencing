@@ -1,4 +1,4 @@
-# name: Qiita CI
+# name: Qiita Plugin CI
 
 on:
   push:

@@ -37,7 +37,7 @@ class SummaryTestsNotDemux(PluginTestCase):
         # Create a job in Qiita
         artifact_id = 1
         parameters = {'input_data': artifact_id}
-        data = {'command': dumps(['Target Gene type', '0.1.0',
+        data = {'command': dumps(['Sequencing Data Type', '2021.03',
                                   'Generate HTML summary']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
@@ -78,7 +78,7 @@ class SummaryTestsNotDemux(PluginTestCase):
     def test_generate_html_summary_demux(self):
         artifact_id = 2
         parameters = {'input_data': artifact_id}
-        data = {'command': dumps(['Target Gene type', '0.1.0',
+        data = {'command': dumps(['Sequencing Data Type', '2021.03',
                                   'Generate HTML summary']),
                 'parameters': dumps(parameters),
                 'stuatus': 'running'}
@@ -175,7 +175,7 @@ class SummaryTestsNotDemux(PluginTestCase):
             'TGTCTGCTGTGAAATCCCCGGGCTCAACCTGGGAATGGCAGTGGAAACTGGCGAGCTTGAGTGTG'
             'GCAGAGGGGGGGGGAATTCCGCGTGTAGCAGTGAAATGCGTAGAGATGCGGAGGAACACCGATGG'
             'CGAAGGCAACCCCCTGGGATAATATTTACGCTCAT\n</p><hr/>']
-        self.assertItemsEqual(obs, exp)
+        self.assertCountEqual(obs, exp)
 
     def test_summary_not_demultiplexed_not_gzipped_header(self):
         test_dir = mkdtemp()
@@ -231,7 +231,7 @@ class SummaryTestsNotDemux(PluginTestCase):
             'TGTCTGCTGTGAAATCCCCGGGCTCAACCTGGGAATGGCAGTGGAAACTGGCGAGCTTGAGTGTG'
             'GCAGAGGGGGGGGGAATTCCGCGTGTAGCAGTGAAATGCGTAGAGATGCGGAGGAACACCGATGG'
             'CGAAGGCAACCCCCTGGGATAATATTTACGCTCAT\n</p><hr/>']
-        self.assertItemsEqual(obs, exp)
+        self.assertCountEqual(obs, exp)
 
     def test_summary_not_demultiplexed_empty(self):
         test_dir = mkdtemp()
@@ -246,7 +246,7 @@ class SummaryTestsNotDemux(PluginTestCase):
         exp = [
             '<h3>reads.fastq (preprocessed_fastq)</h3>',
             '<b>MD5:</b>: d41d8cd98f00b204e9800998ecf8427e</br>']
-        self.assertItemsEqual(obs, exp)
+        self.assertCountEqual(obs, exp)
 
     def test_summary_demultiplexed(self):
         artifact_type = 'Demultiplexed'
