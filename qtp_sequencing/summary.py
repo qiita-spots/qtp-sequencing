@@ -9,9 +9,8 @@
 from hashlib import md5
 from gzip import open as gopen
 from os.path import basename, join
-from urllib.parse import quote
 from base64 import b64encode
-from io import StringIO
+from io import BytesIO
 from html import escape
 
 from qiita_files.demux import stats as demux_stats
@@ -123,7 +122,7 @@ def _summary_not_demultiplexed(artifact_type, filepaths):
                 # not raise an error until you try to read
                 try:
                     with gopen(fp, 'r') as fin:
-                        header = [escape(line) for line, _ in zip(
+                        header = [escape(line.decode()) for line, _ in zip(
                             fin, range(LINES_TO_READ_FOR_HEAD))]
                 except IOError:
                     with open(fp, 'r') as fin:
@@ -188,10 +187,11 @@ def _summary_demultiplexed(artifact_type, filepaths):
     plt.xlim(min(shist_edge), max(shist_edge))
     plt.xlabel('Sequence Length')
     plt.ylabel('Number of sequences')
-    plot = StringIO()
+    plot = BytesIO()
     plt.savefig(plot, format='png')
     plot.seek(0)
-    uri = 'data:image/png;base64,' + quote(b64encode(plot.buf))
-    artifact_information.append('<img src = "%s"/>' % uri)
+    artifact_information.append(
+        '<img src = "data:image/png;base64,{}"/>'.format(
+            b64encode(plot.getvalue()).decode('utf-8')))
 
     return artifact_information

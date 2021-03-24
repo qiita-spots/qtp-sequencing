@@ -57,11 +57,11 @@ class PluginTests(PluginTestCase):
         bcds_fp = files['raw_barcodes'][0]
         self._clean_up_files.append(bcds_fp)
         with GzipFile(bcds_fp, mode='w', mtime=1) as fh:
-            fh.write(BARCODES)
+            fh.write(BARCODES.encode())
         fwd_fp = files['raw_forward_seqs'][0]
         self._clean_up_files.append(fwd_fp)
         with GzipFile(fwd_fp, mode='w', mtime=1) as fh:
-            fh.write(READS)
+            fh.write(READS.encode())
 
         plugin("https://localhost:21174", job_id, self.out_dir)
         self._wait_job(job_id)
@@ -86,6 +86,7 @@ class PluginTests(PluginTestCase):
             '/apitest/prep_template/', data=data)['prep']
 
         parameters = {'template': template,
+                      'analysis': None,
                       'files': dumps(files),
                       'artifact_type': atype}
 
@@ -103,6 +104,7 @@ class PluginTests(PluginTestCase):
 
     def test_plugin_error(self):
         parameters = {'template': 1,
+                      'analysis': None,
                       'files': dumps({'log': ['/path/to/file1.log']}),
                       'artifact_type': "Demultiplexed"}
         data = {'command': dumps(
@@ -166,7 +168,7 @@ CCCCCCCCCFFFGGGGGGGGGGGGGHHHHHHGGGGGHHHHGGGGGHHGGGGGHHHHHHHHGGGGHHHGGGGGGGGGHH\
 GGGHGHHHHHHHHHHHHHHHHHGHHHGGGGGGHHHHHHHHGGHGGHHGHHHHHHHHHFHHHHHHHHHHHHHHHGHHHG\
 HHGEGGDGGFFFGGGFGGGGGGGGGGGFFFFFFFDFFFAFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFEFFFF\
 FFFFFB:FFFFFFFFFF
-""".encode()
+"""
 
 BARCODES = """@MISEQ03:123:000000000-A40KM:1:1101:14149:1572 1:N:0:TCCACAGGAGT
 TCCACAGGAGT
@@ -184,7 +186,7 @@ AABCCFFFFFF
 TCCACAGGAGT
 +
 CCCCCCCCCFF
-""".encode()
+"""
 
 if __name__ == '__main__':
     main()

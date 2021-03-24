@@ -52,11 +52,11 @@ class SummaryTestsNotDemux(PluginTestCase):
         bcds_fp = files['raw_barcodes'][0]
         self._clean_up_files.append(bcds_fp)
         with GzipFile(bcds_fp, mode='w', mtime=1) as fh:
-            fh.write(BARCODES)
+            fh.write(BARCODES.encode())
         fwd_fp = files['raw_forward_seqs'][0]
         self._clean_up_files.append(fwd_fp)
         with GzipFile(fwd_fp, mode='w', mtime=1) as fh:
-            fh.write(READS)
+            fh.write(READS.encode())
 
         # Run the test
         obs_success, obs_ainfo, obs_error = generate_html_summary(
@@ -127,11 +127,11 @@ class SummaryTestsNotDemux(PluginTestCase):
 
         bcds_fp = join(test_dir, 'barcodes.fastq.gz')
         with GzipFile(bcds_fp, mode='w', mtime=1) as fh:
-            fh.write(BARCODES)
+            fh.write(BARCODES.encode())
 
         fwd_fp = join(test_dir, 'reads.fastq.gz')
         with GzipFile(fwd_fp, mode='w', mtime=1) as fh:
-            fh.write(READS)
+            fh.write(READS.encode())
 
         artifact_type = 'FASTQ'
         filepaths = {'raw_forward_seqs': [fwd_fp],
@@ -238,7 +238,8 @@ class SummaryTestsNotDemux(PluginTestCase):
         self._clean_up_files.append(test_dir)
 
         fwd_fp = join(test_dir, 'reads.fastq')
-        open(fwd_fp, 'w', 0).close()
+        with open(fwd_fp, 'w'):
+            pass
 
         artifact_type = 'per_sample_FASTQ'
         filepaths = {'preprocessed_fastq': [fwd_fp]}

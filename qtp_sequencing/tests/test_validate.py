@@ -50,6 +50,7 @@ class ValidateTests(PluginTestCase):
             '/apitest/prep_template/', data=data)['prep']
 
         parameters = {'template': template,
+                      'analysis': None,
                       'files': dumps(files),
                       'artifact_type': atype}
 
@@ -533,7 +534,7 @@ class ValidateTests(PluginTestCase):
             f.write(FASTQ_SEQS.format(**sample_names))
 
         demux_fp = "%s.demux" % fastq_fp
-        with File(demux_fp) as f:
+        with File(demux_fp, 'w') as f:
             to_hdf5(fastq_fp, f)
 
         out_dir = mkdtemp()
@@ -658,6 +659,7 @@ class ValidateTests(PluginTestCase):
 
     def test_validate_error(self):
         parameters = {'template': 1,
+                      'analysis': None,
                       'files': dumps(
                           {"preprocessed_demux": ["/path/file1.demux"]}),
                       'artifact_type': 'UNKNOWN'}
