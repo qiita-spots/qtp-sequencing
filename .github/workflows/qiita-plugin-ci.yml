@@ -76,7 +76,7 @@ jobs:
       - name: Install plugins
         shell: bash -l {0}
         run: |
-          conda config --add channels anaconda
+          conda config --add channels bioconda
           conda create -q --yes -n qtp-sequencing python=3.6 pip pigz quast
           conda activate qtp-sequencing
 
