@@ -9,6 +9,7 @@
 from unittest import main
 from tempfile import mkdtemp
 from os import remove
+
 from os.path import exists, isdir, join, dirname
 from shutil import rmtree, copyfile
 from json import dumps
@@ -17,7 +18,8 @@ from qiita_client.testing import PluginTestCase
 from gzip import GzipFile
 
 from qtp_sequencing.summary import (
-    generate_html_summary, _summary_demultiplexed, _summary_not_demultiplexed)
+    generate_html_summary, _summary_demultiplexed, _summary_not_demultiplexed,
+    _summary_FASTA_preprocessed)
 
 
 class SummaryTestsNotDemux(PluginTestCase):
@@ -267,12 +269,27 @@ class SummaryTestsNotDemux(PluginTestCase):
         self.assertEqual(obs[:-1], exp[:-1])
         self.assertRegexpMatches(obs[-1], exp[-1])
 
-    def test_summary_demultiplexed_no_demux(self):
-        artifact_type = 'Demultiplexed'
-        filepaths = {'preprocessed_fastq': ['ignored']}
+    def test_summary_FASTA_preprocessed(self):
+        artifact_type = 'FASTA_preprocessed'
 
-        obs = _summary_demultiplexed(artifact_type, filepaths)
-        self.assertIsNone(obs)
+        indir = join(dirname(__file__), 'test_data')
+        input = join(indir, 'scaffolds.fasta.gz')
+        fna_files = []
+        for rp in ['s1', 's2', 's3', 's4']:
+            output = join(indir, '%s.fasta.gz' % rp)
+            copyfile(input, output)
+            fna_files.append(output)
+        files = {'preprocessed_fasta': fna_files}
+
+        obs = _summary_FASTA_preprocessed(
+            artifact_type, files, self.out_dir)
+        exp = ['All statistics are based on contigs of size >= 500 bp, unless '
+               'otherwise noted (e.g., "# contigs (>= 0 bp)" and "Total '
+               'length (>= 0 bp)" include all contigs).\n', '\n', 'Assembly   '
+               '                 s1       s2       s3       s4     \n',
+               '# contigs (>= 0 bp)         2550     2550     2550     '
+               '2550   \n']
+        self.assertEqual(obs[:4], exp)
 
 
 READS = """@MISEQ03:123:000000000-A40KM:1:1101:14149:1572 1:N:0:TCCACAGGAGT
