@@ -76,7 +76,7 @@ jobs:
       - name: Install plugins
         shell: bash -l {0}
         run: |
-          conda create -q --yes -n qtp-sequencing python=3.6 pip pigz
+          conda create -q --yes -n qtp-sequencing python=3.6 pip pigz quast
           conda activate qtp-sequencing
 
           export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/server.crt
