@@ -269,6 +269,13 @@ class SummaryTestsNotDemux(PluginTestCase):
         self.assertEqual(obs[:-1], exp[:-1])
         self.assertRegexpMatches(obs[-1], exp[-1])
 
+    def test_summary_demultiplexed_no_demux(self):
+        artifact_type = 'Demultiplexed'
+        filepaths = {'preprocessed_fastq': ['ignored']}
+
+        obs = _summary_demultiplexed(artifact_type, filepaths)
+        self.assertIsNone(obs)
+
     def test_summary_FASTA_preprocessed(self):
         artifact_type = 'FASTA_preprocessed'
 
