@@ -219,7 +219,7 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files, test=False):
     qclient.update_job_step(
         job_id, "Step 2: Validating 'per_sample_FASTQ' files")
 
-    samples = prep_info.keys()
+    samples = list(prep_info.keys())
     samples_count = len(samples)
 
     # Check if there is any filepath type that is not supported

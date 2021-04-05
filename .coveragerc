@@ -4,9 +4,9 @@
 omit =
     */test*
     */__init__.py
-source = qtp_target_gene
+source = qtp_sequencing
 branch = True
-include = */qtp_target_gene/*
+include = */qtp_sequencing/*
 
 [report]
 exclude_lines =

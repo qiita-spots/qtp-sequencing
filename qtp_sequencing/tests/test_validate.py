@@ -20,7 +20,7 @@ from qiita_client.testing import PluginTestCase
 from h5py import File
 from qiita_files.demux import to_hdf5
 
-from qtp_target_gene.validate import (
+from qtp_sequencing.validate import (
     _validate_multiple, _validate_per_sample_FASTQ, _validate_demux_file,
     _validate_demultiplexed, validate)
 
@@ -50,10 +50,12 @@ class ValidateTests(PluginTestCase):
             '/apitest/prep_template/', data=data)['prep']
 
         parameters = {'template': template,
+                      'analysis': None,
                       'files': dumps(files),
                       'artifact_type': atype}
 
-        data = {'command': dumps(['Target Gene type', '0.1.0', 'Validate']),
+        data = {'command': dumps(
+            ['Sequencing Data Type', '2021.03', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
@@ -139,7 +141,7 @@ class ValidateTests(PluginTestCase):
                  "file1_b.fastq, file2_b.fastq, file3_b.fastq")
         self.assertFalse(obs_success)
         self.assertIsNone(obs_ainfo)
-        self.assertItemsEqual(obs_error.split('\n'), error.split('\n'))
+        self.assertCountEqual(obs_error.split('\n'), error.split('\n'))
 
         # File doesn't match any run prefix
         files = {'raw_forward_seqs': ['/path/to/file1.fastq',
@@ -156,7 +158,7 @@ class ValidateTests(PluginTestCase):
                  "prefix values in the prep information: file1_b.fastq")
         self.assertFalse(obs_success)
         self.assertIsNone(obs_ainfo)
-        self.assertItemsEqual(obs_error.split('\n'), error.split('\n'))
+        self.assertCountEqual(obs_error.split('\n'), error.split('\n'))
 
         # A required filepath type is missing
         files = {'raw_forward_seqs': ['/path/to/prefix1.fastq',
@@ -191,7 +193,7 @@ class ValidateTests(PluginTestCase):
                  "file per type: prefix1_b.fastq, prefix2_b.fastq")
         self.assertFalse(obs_success)
         self.assertIsNone(obs_ainfo)
-        self.assertItemsEqual(obs_error.split('\n'), error.split('\n'))
+        self.assertCountEqual(obs_error.split('\n'), error.split('\n'))
 
     def test_validate_SFF(self):
         prep_info = {"1.SKB2.640194": {"run_prefix": "GAX40"},
@@ -220,7 +222,7 @@ class ValidateTests(PluginTestCase):
                  "match any file: GAX50")
         self.assertFalse(obs_success)
         self.assertIsNone(obs_ainfo)
-        self.assertItemsEqual(obs_error, error)
+        self.assertCountEqual(obs_error, error)
 
     def test_validate_per_sample_FASTQ_run_prefix(self):
         f1 = join(self.source_dir, 'SKB2.640194_file.fastq')
@@ -532,7 +534,7 @@ class ValidateTests(PluginTestCase):
             f.write(FASTQ_SEQS.format(**sample_names))
 
         demux_fp = "%s.demux" % fastq_fp
-        with File(demux_fp) as f:
+        with File(demux_fp, 'w') as f:
             to_hdf5(fastq_fp, f)
 
         out_dir = mkdtemp()
@@ -565,7 +567,7 @@ class ValidateTests(PluginTestCase):
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
         with File(exp_demux_fp) as f:
-            self.assertItemsEqual(f.keys(), ["1.SKB2.640194", "1.SKM4.640180"])
+            self.assertCountEqual(f.keys(), ["1.SKB2.640194", "1.SKM4.640180"])
 
     def test_validate_demux_file_without_demux(self):
         demux_fp, fastq_fp, out_dir = self._generate_files(
@@ -588,7 +590,7 @@ class ValidateTests(PluginTestCase):
         demux = [f[0] for f in obs_ainfo[0].files
                  if f[1] == 'preprocessed_demux'][0]
         with File(demux) as f:
-            self.assertItemsEqual(f.keys(), ["1.SKB2.640194", "1.SKM4.640180"])
+            self.assertCountEqual(f.keys(), ["1.SKB2.640194", "1.SKM4.640180"])
 
     def test_validate_demux_file_infer(self):
         demux_fp, _, out_dir = self._generate_files({'s1': 'SKB2.640194',
@@ -615,7 +617,7 @@ class ValidateTests(PluginTestCase):
         self.assertEqual(obs_ainfo, exp)
         self.assertEqual(obs_error, "")
         with File(exp_demux_fp) as f:
-            self.assertItemsEqual(f.keys(), ["1.SKB2.640194", "1.SKM4.640180"])
+            self.assertCountEqual(f.keys(), ["1.SKB2.640194", "1.SKM4.640180"])
 
     def test_validate_demux_file_error(self):
         demux_fp, _, out_dir = self._generate_files({'s1': 's1', 's2': 's2'})
@@ -657,11 +659,13 @@ class ValidateTests(PluginTestCase):
 
     def test_validate_error(self):
         parameters = {'template': 1,
+                      'analysis': None,
                       'files': dumps(
                           {"preprocessed_demux": ["/path/file1.demux"]}),
                       'artifact_type': 'UNKNOWN'}
 
-        data = {'command': dumps(['Target Gene type', '0.1.0', 'Validate']),
+        data = {'command': dumps(
+            ['Sequencing Data Type', '2021.03', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(

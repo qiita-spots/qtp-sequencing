@@ -10,19 +10,20 @@
 
 import click
 
-from qtp_target_gene import plugin
+from qtp_sequencing import plugin
 
 
 @click.command()
 @click.option('--env-script', prompt='Environment script',
-              default='source activate qtp-target-gene')
+              default='conda activate qtp-sequencing')
 @click.option('--server-cert', prompt='Server certificate', default='None')
 def config(env_script, server_cert):
     """Generates the Qiita configuration files"""
     if server_cert == 'None':
         server_cert = None
-    plugin.generate_config(env_script, 'start_target_gene_types',
+    plugin.generate_config(env_script, 'start_qtp_sequencing',
                            server_cert=server_cert)
+
 
 if __name__ == '__main__':
     config()

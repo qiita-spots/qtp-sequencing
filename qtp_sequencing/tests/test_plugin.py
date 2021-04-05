@@ -17,7 +17,7 @@ from time import sleep
 
 from qiita_client.testing import PluginTestCase
 
-from qtp_target_gene import plugin
+from qtp_sequencing import plugin
 
 
 class PluginTests(PluginTestCase):
@@ -43,7 +43,7 @@ class PluginTests(PluginTestCase):
 
     def test_plugin_summary(self):
         artifact_id = 1
-        data = {'command': dumps(['Target Gene type', '0.1.0',
+        data = {'command': dumps(['Sequencing Data Type', '2021.03',
                                   'Generate HTML summary']),
                 'parameters': dumps({'input_data': artifact_id}),
                 'status': 'running'}
@@ -57,11 +57,11 @@ class PluginTests(PluginTestCase):
         bcds_fp = files['raw_barcodes'][0]
         self._clean_up_files.append(bcds_fp)
         with GzipFile(bcds_fp, mode='w', mtime=1) as fh:
-            fh.write(BARCODES)
+            fh.write(BARCODES.encode())
         fwd_fp = files['raw_forward_seqs'][0]
         self._clean_up_files.append(fwd_fp)
         with GzipFile(fwd_fp, mode='w', mtime=1) as fh:
-            fh.write(READS)
+            fh.write(READS.encode())
 
         plugin("https://localhost:21174", job_id, self.out_dir)
         self._wait_job(job_id)
@@ -86,10 +86,12 @@ class PluginTests(PluginTestCase):
             '/apitest/prep_template/', data=data)['prep']
 
         parameters = {'template': template,
+                      'analysis': None,
                       'files': dumps(files),
                       'artifact_type': atype}
 
-        data = {'command': dumps(['Target Gene type', '0.1.0', 'Validate']),
+        data = {'command': dumps(
+            ['Sequencing Data Type', '2021.03', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
@@ -102,9 +104,11 @@ class PluginTests(PluginTestCase):
 
     def test_plugin_error(self):
         parameters = {'template': 1,
+                      'analysis': None,
                       'files': dumps({'log': ['/path/to/file1.log']}),
                       'artifact_type': "Demultiplexed"}
-        data = {'command': dumps(['Target Gene type', '0.1.0', 'Validate']),
+        data = {'command': dumps(
+            ['Sequencing Data Type', '2021.03', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(

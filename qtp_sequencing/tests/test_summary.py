@@ -16,7 +16,7 @@ from json import dumps
 from qiita_client.testing import PluginTestCase
 from gzip import GzipFile
 
-from qtp_target_gene.summary import (
+from qtp_sequencing.summary import (
     generate_html_summary, _summary_demultiplexed, _summary_not_demultiplexed)
 
 
@@ -37,7 +37,7 @@ class SummaryTestsNotDemux(PluginTestCase):
         # Create a job in Qiita
         artifact_id = 1
         parameters = {'input_data': artifact_id}
-        data = {'command': dumps(['Target Gene type', '0.1.0',
+        data = {'command': dumps(['Sequencing Data Type', '2021.03',
                                   'Generate HTML summary']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
@@ -52,11 +52,11 @@ class SummaryTestsNotDemux(PluginTestCase):
         bcds_fp = files['raw_barcodes'][0]
         self._clean_up_files.append(bcds_fp)
         with GzipFile(bcds_fp, mode='w', mtime=1) as fh:
-            fh.write(BARCODES)
+            fh.write(BARCODES.encode())
         fwd_fp = files['raw_forward_seqs'][0]
         self._clean_up_files.append(fwd_fp)
         with GzipFile(fwd_fp, mode='w', mtime=1) as fh:
-            fh.write(READS)
+            fh.write(READS.encode())
 
         # Run the test
         obs_success, obs_ainfo, obs_error = generate_html_summary(
@@ -78,7 +78,7 @@ class SummaryTestsNotDemux(PluginTestCase):
     def test_generate_html_summary_demux(self):
         artifact_id = 2
         parameters = {'input_data': artifact_id}
-        data = {'command': dumps(['Target Gene type', '0.1.0',
+        data = {'command': dumps(['Sequencing Data Type', '2021.03',
                                   'Generate HTML summary']),
                 'parameters': dumps(parameters),
                 'stuatus': 'running'}
@@ -127,11 +127,11 @@ class SummaryTestsNotDemux(PluginTestCase):
 
         bcds_fp = join(test_dir, 'barcodes.fastq.gz')
         with GzipFile(bcds_fp, mode='w', mtime=1) as fh:
-            fh.write(BARCODES)
+            fh.write(BARCODES.encode())
 
         fwd_fp = join(test_dir, 'reads.fastq.gz')
         with GzipFile(fwd_fp, mode='w', mtime=1) as fh:
-            fh.write(READS)
+            fh.write(READS.encode())
 
         artifact_type = 'FASTQ'
         filepaths = {'raw_forward_seqs': [fwd_fp],
@@ -175,7 +175,7 @@ class SummaryTestsNotDemux(PluginTestCase):
             'TGTCTGCTGTGAAATCCCCGGGCTCAACCTGGGAATGGCAGTGGAAACTGGCGAGCTTGAGTGTG'
             'GCAGAGGGGGGGGGAATTCCGCGTGTAGCAGTGAAATGCGTAGAGATGCGGAGGAACACCGATGG'
             'CGAAGGCAACCCCCTGGGATAATATTTACGCTCAT\n</p><hr/>']
-        self.assertItemsEqual(obs, exp)
+        self.assertCountEqual(obs, exp)
 
     def test_summary_not_demultiplexed_not_gzipped_header(self):
         test_dir = mkdtemp()
@@ -231,14 +231,15 @@ class SummaryTestsNotDemux(PluginTestCase):
             'TGTCTGCTGTGAAATCCCCGGGCTCAACCTGGGAATGGCAGTGGAAACTGGCGAGCTTGAGTGTG'
             'GCAGAGGGGGGGGGAATTCCGCGTGTAGCAGTGAAATGCGTAGAGATGCGGAGGAACACCGATGG'
             'CGAAGGCAACCCCCTGGGATAATATTTACGCTCAT\n</p><hr/>']
-        self.assertItemsEqual(obs, exp)
+        self.assertCountEqual(obs, exp)
 
     def test_summary_not_demultiplexed_empty(self):
         test_dir = mkdtemp()
         self._clean_up_files.append(test_dir)
 
         fwd_fp = join(test_dir, 'reads.fastq')
-        open(fwd_fp, 'w', 0).close()
+        with open(fwd_fp, 'w'):
+            pass
 
         artifact_type = 'per_sample_FASTQ'
         filepaths = {'preprocessed_fastq': [fwd_fp]}
@@ -246,7 +247,7 @@ class SummaryTestsNotDemux(PluginTestCase):
         exp = [
             '<h3>reads.fastq (preprocessed_fastq)</h3>',
             '<b>MD5:</b>: d41d8cd98f00b204e9800998ecf8427e</br>']
-        self.assertItemsEqual(obs, exp)
+        self.assertCountEqual(obs, exp)
 
     def test_summary_demultiplexed(self):
         artifact_type = 'Demultiplexed'
