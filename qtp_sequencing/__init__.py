@@ -41,6 +41,6 @@ artifact_types = [
 ]
 
 # Initialize the plugin
-plugin = QiitaTypePlugin('Sequencing Data Type', '2021.03',
+plugin = QiitaTypePlugin('Sequencing Data Type', '2021.05',
                          'Sequencing artifact types plugin',
                          validate, generate_html_summary, artifact_types)

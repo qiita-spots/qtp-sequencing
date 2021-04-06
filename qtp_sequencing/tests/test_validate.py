@@ -55,7 +55,7 @@ class ValidateTests(PluginTestCase):
                       'artifact_type': atype}
 
         data = {'command': dumps(
-            ['Sequencing Data Type', '2021.03', 'Validate']),
+            ['Sequencing Data Type', '2021.05', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
@@ -665,7 +665,7 @@ class ValidateTests(PluginTestCase):
                       'artifact_type': 'UNKNOWN'}
 
         data = {'command': dumps(
-            ['Sequencing Data Type', '2021.03', 'Validate']),
+            ['Sequencing Data Type', '2021.05', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
