@@ -14,6 +14,8 @@ from io import BytesIO
 from html import escape
 
 from qiita_files.demux import stats as demux_stats
+from qiita_client.util import system_call
+
 import matplotlib
 
 matplotlib.use('Agg')
@@ -68,6 +70,9 @@ def generate_html_summary(qclient, job_id, parameters, out_dir):
             artifact_type, filepaths)
         if artifact_information is None:
             raise ValueError("We couldn't find a demux file in your artifact")
+    elif artifact_type == 'FASTA_preprocessed':
+        artifact_information = _summary_FASTA_preprocessed(
+            artifact_type, filepaths, out_dir)
     else:
         artifact_information = _summary_not_demultiplexed(
             artifact_type, filepaths)
@@ -193,5 +198,37 @@ def _summary_demultiplexed(artifact_type, filepaths):
     artifact_information.append(
         '<img src = "data:image/png;base64,{}"/>'.format(
             b64encode(plot.getvalue()).decode('utf-8')))
+
+    return artifact_information
+
+
+def _summary_FASTA_preprocessed(artifact_type, filepaths, out_dir):
+    """Generates the HTML summary for Demultiplexed artifacts
+
+    Parameters
+    ----------
+    artifact_type : str
+        The artifact type
+    filepaths : [(str, str)]
+        A list of string pairs where the first element is the filepath and the
+        second is the filepath type
+    out_dir : str
+        The output folder
+
+    Returns
+    -------
+    list
+        A list of strings with the html summary
+    """
+    files = filepaths.get('preprocessed_fasta')
+    cmd = f"quast %s -o {out_dir}/quast" % ' '.join(files)
+    std_out, std_err, return_value = system_call(cmd)
+    if return_value != 0:
+        artifact_information = (
+            "Std out: %s\nStd err: %s\n\nCommand run was:\n%s" % (
+                std_out, std_err, cmd))
+    else:
+        with open(f'{out_dir}/quast/report.txt', 'r') as f:
+            artifact_information = f.readlines()
 
     return artifact_information

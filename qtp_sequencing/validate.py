@@ -23,6 +23,7 @@ FILEPATH_TYPE_DICT = {
     'FASTQ': ({'raw_forward_seqs', 'raw_barcodes'}, {'raw_reverse_seqs'}),
     'FASTA': ({'raw_fasta'}, {'raw_qual'}),
     'FASTA_Sanger': ({'raw_fasta'}, set()),
+    'FASTA_preprocessed': ({'preprocessed_fasta'}, set()),
 }
 
 MUST_GZ = {
@@ -565,7 +566,8 @@ def validate(qclient, job_id, parameters, out_dir):
     prep_info = qclient.get("/qiita_db/prep_template/%s/data/" % prep_id)
     prep_info = prep_info['data']
 
-    if a_type in ['SFF', 'FASTQ', 'FASTA', 'FASTA_Sanger']:
+    _vm = ['SFF', 'FASTQ', 'FASTA', 'FASTA_Sanger', 'FASTA_preprocessed']
+    if a_type in _vm:
         return _validate_multiple(qclient, job_id, prep_info, files, a_type)
     elif a_type == 'per_sample_FASTQ':
         return _validate_per_sample_FASTQ(qclient, job_id, prep_info, files)
@@ -575,5 +577,5 @@ def validate(qclient, job_id, parameters, out_dir):
     else:
         error_msg = ("Unknown artifact_type %s. Supported types: 'SFF', "
                      "'FASTQ', 'FASTA', 'FASTA_Sanger', 'per_sample_FASTQ', "
-                     "'Demultiplexed'" % a_type)
+                     "'FASTA_preprocessed', 'Demultiplexed'" % a_type)
         return False, None, error_msg

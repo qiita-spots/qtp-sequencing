@@ -10,7 +10,7 @@
 from setuptools import setup
 from glob import glob
 
-__version__ = "2021.03"
+__version__ = "2021.05"
 
 classes = """
     Development Status :: 5 - Production/Stable
@@ -47,7 +47,7 @@ setup(name='qtp-sequencing',
       # note that there is a bug in newer versions of h5py and the newer
       # version required 3.7; the bug is:
       # https://github.com/h5py/h5py/issues/992
-      install_requires=['click >= 3.3', 'matplotlib', 'h5py==2.9.0',
+      install_requires=['click >= 3.3', 'matplotlib', 'h5py==2.9.0', 'quast',
                         'qiita-files @ https://github.com/'
                         'qiita-spots/qiita-files/archive/master.zip',
                         'qiita_client @ https://github.com/'
