@@ -290,12 +290,9 @@ class SummaryTestsNotDemux(PluginTestCase):
 
         obs = _summary_FASTA_preprocessed(
             artifact_type, files, self.out_dir)
-        exp = ['All statistics are based on contigs of size >= 500 bp, unless '
-               'otherwise noted (e.g., "# contigs (>= 0 bp)" and "Total '
-               'length (>= 0 bp)" include all contigs).\n', '\n', 'Assembly   '
-               '                 s1       s2       s3       s4     \n',
-               '# contigs (>= 0 bp)         2550     2550     2550     '
-               '2550   \n']
+        exp = ['<!DOCTYPE html>\n', '<html lang="en">\n', '<head>\n',
+               '    <meta http-equiv="Content-Type" content="text/html;'
+               'charset=utf-8" >\n']
         self.assertEqual(obs[:4], exp)
 
 

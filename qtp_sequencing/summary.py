@@ -228,7 +228,7 @@ def _summary_FASTA_preprocessed(artifact_type, filepaths, out_dir):
             "Std out: %s\nStd err: %s\n\nCommand run was:\n%s" % (
                 std_out, std_err, cmd))
     else:
-        with open(f'{out_dir}/quast/report.txt', 'r') as f:
+        with open(f'{out_dir}/quast/report.html', 'r') as f:
             artifact_information = f.readlines()
 
     return artifact_information
