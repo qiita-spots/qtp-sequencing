@@ -19,7 +19,7 @@ classes = """
     Topic :: Software Development :: Libraries :: Application Frameworks
     Topic :: Software Development :: Libraries :: Python Modules
     Programming Language :: Python
-    Programming Language :: Python :: 3.6
+    Programming Language :: Python :: 3.9
     Programming Language :: Python :: Implementation :: CPython
     Operating System :: POSIX :: Linux
     Operating System :: MacOS :: MacOS X
@@ -47,7 +47,7 @@ setup(name='qtp-sequencing',
       # note that there is a bug in newer versions of h5py and the newer
       # version required 3.7; the bug is:
       # https://github.com/h5py/h5py/issues/992
-      install_requires=['click >= 3.3', 'matplotlib', 'h5py==2.9.0', 'quast',
+      install_requires=['click', 'matplotlib', 'h5py', 'quast',
                         'qiita-files @ https://github.com/'
                         'qiita-spots/qiita-files/archive/master.zip',
                         'qiita_client @ https://github.com/'
