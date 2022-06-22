@@ -7,23 +7,21 @@
 # -----------------------------------------------------------------------------
 
 from hashlib import md5
-from gzip import open as gopen
 from os.path import basename, join
 from base64 import b64encode
 from io import BytesIO
-from html import escape
 
 from qiita_files.demux import stats as demux_stats
 from qiita_client.util import system_call
 
 import matplotlib
+import pandas as pd
 
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt # noqa
 
-FILEPATH_TYPE_TO_NOT_SHOW_HEAD = ['SFF']
-LINES_TO_READ_FOR_HEAD = 10
+FILEPATH_TYPE_NO_FQTOOLS = ['SFF', 'FASTA_preprocessed']
 
 
 def generate_html_summary(qclient, job_id, parameters, out_dir):
@@ -66,20 +64,20 @@ def generate_html_summary(qclient, job_id, parameters, out_dir):
     # we have 2 main cases: Demultiplexed and everything else,
     # splitting on those
     if artifact_type == 'Demultiplexed':
-        artifact_information = _summary_demultiplexed(
-            artifact_type, filepaths)
+        artifact_information = '\n'.join(_summary_demultiplexed(
+            artifact_type, filepaths))
         if artifact_information is None:
             raise ValueError("We couldn't find a demux file in your artifact")
     elif artifact_type == 'FASTA_preprocessed':
-        artifact_information = _summary_FASTA_preprocessed(
-            artifact_type, filepaths, out_dir)
+        artifact_information = '\n'.join(_summary_FASTA_preprocessed(
+            artifact_type, filepaths, out_dir))
     else:
         artifact_information = _summary_not_demultiplexed(
             artifact_type, filepaths)
 
     of_fp = join(out_dir, "artifact_%d.html" % artifact_id)
     with open(of_fp, 'w') as of:
-        of.write('\n'.join(artifact_information))
+        of.write(artifact_information)
 
     # Step 3: add the new file to the artifact using REST api
     success = True
@@ -111,40 +109,39 @@ def _summary_not_demultiplexed(artifact_type, filepaths):
     """
     # loop over each of the fps/fps_type pairs
     artifact_information = []
+    errors = []
+
     for fps_type, fps in sorted(filepaths.items()):
         # Step 2: generate HTML summary
         # md5, from http://stackoverflow.com/a/3431838
         for fp in fps:
+            fn = basename(fp)
+
             with open(fp, "rb") as f:
                 hash_md5 = md5()
                 for chunk in iter(lambda: f.read(4096), b""):
                     hash_md5.update(chunk)
+            data = {'filename': fn, 'md5': hash_md5.hexdigest(),
+                    'file_type': fps_type}
 
-            # getting head of the files
-            header = []
-            if artifact_type not in FILEPATH_TYPE_TO_NOT_SHOW_HEAD:
-                # we need to encapsulate the full for loop because gzip will
-                # not raise an error until you try to read
-                try:
-                    with gopen(fp, 'r') as fin:
-                        header = [escape(line.decode()) for line, _ in zip(
-                            fin, range(LINES_TO_READ_FOR_HEAD))]
-                except IOError:
-                    with open(fp, 'r') as fin:
-                        header = [escape(line) for line, _ in zip(
-                            fin, range(LINES_TO_READ_FOR_HEAD))]
-            filename = basename(fp)
-            artifact_information.append(
-                "<h3>%s (%s)</h3>" % (filename, fps_type))
-            artifact_information.append("<b>MD5:</b>: %s</br>" %
-                                        hash_md5.hexdigest())
-            if header:
-                artifact_information.append(
-                    "<p style=\"font-family:'Courier New', Courier, monospace;"
-                    "font-size:10;\">%s</p><hr/>" % (
-                        "<br/>".join(header)))
+            if artifact_type not in FILEPATH_TYPE_NO_FQTOOLS:
+                cmd = f'fqtools count {fp}'
+                std_out, std_err, return_value = system_call(cmd)
+                if std_err or return_value != 0:
+                    errors.append(f'{fn}: {std_err}')
+                else:
+                    data['reads'] = int(std_out)
 
-    return artifact_information
+            artifact_information.append(data)
+
+    if errors:
+        raise ValueError('Found errors: \n %s' % ''.join(errors))
+
+    df = pd.DataFrame(artifact_information)
+    order = ['file_type', 'reads'] if 'reads' in df.columns else ['file_type']
+    df.sort_values(order, inplace=True)
+
+    return df.to_html(index=False)
 
 
 def _summary_demultiplexed(artifact_type, filepaths):

@@ -64,49 +64,63 @@ class ValidateTests(PluginTestCase):
         return job_id
 
     def test_validate_multiple(self):
+        test_dir = mkdtemp()
+        self._clean_up_files.append(test_dir)
+
+        copyfile(self.fastq, f'{test_dir}/prefix1.fastq')
+        copyfile(self.fastq, f'{test_dir}/prefix2.fastq')
+        copyfile(self.fastq, f'{test_dir}/prefix1_b.fastq')
+        copyfile(self.fastq, f'{test_dir}/prefix2_b.fastq')
+
         prep_info = {
             '1.SKB2.640194': {'run_prefix': 'prefix1'},
             '1.SKM4.640180': {'run_prefix': 'prefix1'},
             '1.SKB3.640195': {'run_prefix': 'prefix2'}}
-        files = {'raw_forward_seqs': ['/path/to/prefix1.fastq',
-                                      '/path/to/prefix2.fastq'],
-                 'raw_barcodes': ['/path/to/prefix1_b.fastq',
-                                  '/path/to/prefix2_b.fastq']}
+        files = {'raw_forward_seqs': [f'{test_dir}/prefix1.fastq',
+                                      f'{test_dir}/prefix2.fastq'],
+                 'raw_barcodes': [f'{test_dir}/prefix1_b.fastq',
+                                  f'{test_dir}/prefix2_b.fastq']}
         atype = "FASTQ"
         job_id = self._create_template_and_job(prep_info, files, atype)
 
         obs_success, obs_ainfo, obs_error = _validate_multiple(
-            self.qclient, job_id, prep_info, files, atype, True)
+            self.qclient, job_id, prep_info, files, atype)
 
+        self.assertEqual(obs_error, "")
         self.assertTrue(obs_success)
         filepaths = [
-            ('/path/to/prefix1_b.fastq.gz', 'raw_barcodes'),
-            ('/path/to/prefix2_b.fastq.gz', 'raw_barcodes'),
-            ('/path/to/prefix1.fastq.gz', 'raw_forward_seqs'),
-            ('/path/to/prefix2.fastq.gz', 'raw_forward_seqs')]
+            (f'{test_dir}/prefix1_b.fastq.gz', 'raw_barcodes'),
+            (f'{test_dir}/prefix2_b.fastq.gz', 'raw_barcodes'),
+            (f'{test_dir}/prefix1.fastq.gz', 'raw_forward_seqs'),
+            (f'{test_dir}/prefix2.fastq.gz', 'raw_forward_seqs')]
         exp = [ArtifactInfo(None, "FASTQ", filepaths)]
         self.assertEqual(obs_ainfo, exp)
-        self.assertEqual(obs_error, "")
 
     def test_validate_multiple_single_lane(self):
+        test_dir = mkdtemp()
+        self._clean_up_files.append(test_dir)
+
+        copyfile(self.fastq, f'{test_dir}/prefix1.fastq')
+        copyfile(self.fastq, f'{test_dir}/prefix1_b.fastq')
+
         prep_info = {"1.SKB2.640194": {"not_a_run_prefix": "prefix1"},
                      "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
                      "1.SKB3.640195": {"not_a_run_prefix": "prefix2"}}
-        files = {'raw_forward_seqs': ['/path/to/prefix1.fastq'],
-                 'raw_barcodes': ['/path/to/prefix1_b.fastq']}
+        files = {'raw_forward_seqs': [f'{test_dir}/prefix1.fastq'],
+                 'raw_barcodes': [f'{test_dir}/prefix1_b.fastq']}
         atype = "FASTQ"
         job_id = self._create_template_and_job(prep_info, files, atype)
 
         obs_success, obs_ainfo, obs_error = _validate_multiple(
-            self.qclient, job_id, prep_info, files, atype, True)
+            self.qclient, job_id, prep_info, files, atype)
 
+        self.assertEqual(obs_error, "")
         self.assertTrue(obs_success)
         filepaths = [
-            ('/path/to/prefix1_b.fastq.gz', 'raw_barcodes'),
-            ('/path/to/prefix1.fastq.gz', 'raw_forward_seqs')]
+            (f'{test_dir}/prefix1_b.fastq.gz', 'raw_barcodes'),
+            (f'{test_dir}/prefix1.fastq.gz', 'raw_forward_seqs')]
         exp = [ArtifactInfo(None, atype, filepaths)]
         self.assertEqual(obs_ainfo, exp)
-        self.assertEqual(obs_error, "")
 
     def test_validate_multiple_error(self):
         # Filepath type not supported
