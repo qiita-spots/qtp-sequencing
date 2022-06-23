@@ -61,7 +61,7 @@ class ValidateTests(PluginTestCase):
         job_id = self.qclient.post(
             '/apitest/processing_job/', data=data)['job']
 
-        return job_id
+        return job_id, parameters
 
     def test_validate_multiple(self):
         test_dir = mkdtemp()
@@ -81,7 +81,7 @@ class ValidateTests(PluginTestCase):
                  'raw_barcodes': [f'{test_dir}/prefix1_b.fastq',
                                   f'{test_dir}/prefix2_b.fastq']}
         atype = "FASTQ"
-        job_id = self._create_template_and_job(prep_info, files, atype)
+        job_id, _ = self._create_template_and_job(prep_info, files, atype)
 
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, atype)
@@ -109,7 +109,7 @@ class ValidateTests(PluginTestCase):
         files = {'raw_forward_seqs': [f'{test_dir}/prefix1.fastq'],
                  'raw_barcodes': [f'{test_dir}/prefix1_b.fastq']}
         atype = "FASTQ"
-        job_id = self._create_template_and_job(prep_info, files, atype)
+        job_id, _ = self._create_template_and_job(prep_info, files, atype)
 
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, atype)
@@ -129,7 +129,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKB3.640195": {"run_prefix": "prefix2"}}
         files = {'Unknown': ['/path/to/file1.fastq']}
         atype = "FASTQ"
-        job_id = self._create_template_and_job(prep_info, files, atype)
+        job_id, _ = self._create_template_and_job(prep_info, files, atype)
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, atype)
         self.assertFalse(obs_success)
@@ -144,7 +144,7 @@ class ValidateTests(PluginTestCase):
                  'raw_barcodes': ['/path/to/file1_b.fastq',
                                   '/path/to/file2_b.fastq',
                                   '/path/to/file3_b.fastq']}
-        job_id = self._create_template_and_job(prep_info, files, atype)
+        job_id, _ = self._create_template_and_job(prep_info, files, atype)
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, atype)
         error = ("Error creating artifact. Offending files:\nraw_forward_seqs:"
@@ -162,7 +162,7 @@ class ValidateTests(PluginTestCase):
                                       '/path/to/prefix2.fastq'],
                  'raw_barcodes': ['/path/to/file1_b.fastq',
                                   '/path/to/prefix2_b.fastq']}
-        job_id = self._create_template_and_job(prep_info, files, atype)
+        job_id, _ = self._create_template_and_job(prep_info, files, atype)
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, atype)
         error = ("Error creating artifact. Offending files:\nraw_forward_seqs:"
@@ -179,7 +179,7 @@ class ValidateTests(PluginTestCase):
                                       '/path/to/prefix2.fastq'],
                  'raw_reverse_seqs': ['/path/to/prefix1_rev.fastq',
                                       '/path/to/prefix2_rev.fastq']}
-        job_id = self._create_template_and_job(prep_info, files, atype)
+        job_id, _ = self._create_template_and_job(prep_info, files, atype)
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, atype)
         self.assertFalse(obs_success)
@@ -195,7 +195,7 @@ class ValidateTests(PluginTestCase):
                                       '/path/to/prefix2.fastq'],
                  'raw_barcodes': ['/path/to/prefix1_b.fastq',
                                   '/path/to/prefix2_b.fastq']}
-        job_id = self._create_template_and_job(prep_info, files, atype)
+        job_id, _ = self._create_template_and_job(prep_info, files, atype)
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, atype)
         error = ("Error creating artifact. Offending files:\nraw_forward_seqs:"
@@ -215,7 +215,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKB3.640195": {"run_prefix": "GAX50"}}
         files = {'raw_sff': ['/path/to/GAX401.sff', '/path/to/GAX402.sff',
                              '/path/to/GAX501.sff']}
-        job_id = self._create_template_and_job(prep_info, files, "SFF")
+        job_id, _ = self._create_template_and_job(prep_info, files, "SFF")
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, 'SFF')
         self.assertTrue(obs_success)
@@ -228,7 +228,7 @@ class ValidateTests(PluginTestCase):
 
         # let's test a failure
         files = {'raw_sff': ['/path/to/GAX401.sff', '/path/to/GAX402.sff']}
-        job_id = self._create_template_and_job(prep_info, files, "SFF")
+        job_id, _ = self._create_template_and_job(prep_info, files, "SFF")
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, 'SFF')
         error = ("Error creating artifact. Offending files:\nraw_sff: The "
@@ -250,7 +250,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKM4.640180": {"run_prefix": "prefix2"},
                      "1.SKB3.640195": {"run_prefix": "prefix3"}}
         files = {'raw_forward_seqs': raw_files}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -267,7 +267,7 @@ class ValidateTests(PluginTestCase):
         files = {'raw_forward_seqs': ['/path/to/SKB2.640194_file.fastq',
                                       '/path/to/SKM4.640180_file.fastq',
                                       '/path/to/SKB3.640195_file.fastq']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files, True)
@@ -288,7 +288,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
                      "1.SKB3.640195": {"not_a_run_prefix": "prefix2"}}
         files = {'raw_forward_seqs': raw_files}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -314,7 +314,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
                      "1.SKB3.640195": {"not_a_run_prefix": "prefix2"}}
         files = {'preprocessed_fastq': [f1, f2, f3]}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -351,7 +351,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
                      "1.SKB3.640195": {"not_a_run_prefix": "prefix2"}}
         files = {'preprocessed_fastq': raw_files}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -367,7 +367,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKM4.640180": {"run_prefix": "prefix2"},
                      "1.SKB3.640195": {"run_prefix": "prefix3"}}
         files = {'Unknown': ['/path/to/file1.fastq']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -381,7 +381,7 @@ class ValidateTests(PluginTestCase):
 
         # Missing raw_forward_seqs and preprocessed_fastq
         files = {'raw_reverse_seqs': ['/path/to/file1.fastq']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -394,7 +394,7 @@ class ValidateTests(PluginTestCase):
         # Raw forward seqs and preprocessed_fastq
         files = {'raw_forward_seqs': ['/path/to/file1.fastq'],
                  'preprocessed_fastq': ['/path/to/file1.fastq']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -407,7 +407,7 @@ class ValidateTests(PluginTestCase):
         # Preprocessed fastq and raw_reverse_seqs
         files = {'raw_reverse_seqs': ['/path/to/file1.fastq'],
                  'preprocessed_fastq': ['/path/to/file1.fastq']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -421,7 +421,7 @@ class ValidateTests(PluginTestCase):
         files = {'raw_forward_seqs': ['/path/to/file1.fastq'],
                  'raw_reverse_seqs': ['/path/to/file1.fastq',
                                       '/path/to/file1.fastq']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -435,7 +435,7 @@ class ValidateTests(PluginTestCase):
         # preprocessed_fastq count mismatch
         files = {'preprocessed_fastq': ['/path/to/file1_R1.fastq',
                                         '/path/to/file1_R2.fastq']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -450,7 +450,7 @@ class ValidateTests(PluginTestCase):
         files = {'raw_forward_seqs': ['/path/to/prefix1_fwd.fastq',
                                       '/path/to/prefix2_fwd.fastq',
                                       '/path/to/Aprefix3_fwd.fastq']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -466,7 +466,7 @@ class ValidateTests(PluginTestCase):
         prep_info = {"1.SKB2.640194": {"run_prefix": "prefix1"},
                      "1.SKM4.640180": {"run_prefix": "prefix1"},
                      "1.SKB3.640195": {"run_prefix": "prefix3"}}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -481,7 +481,7 @@ class ValidateTests(PluginTestCase):
         prep_info = {"1.SKB2.640194": {"not_a_run_prefix": "prefix1"},
                      "1.SKM4.640180": {"not_a_run_prefix": "prefix1"},
                      "1.SKB3.640195": {"not_a_run_prefix": "prefix3"}}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "per_sample_FASTQ")
         obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
             self.qclient, job_id, prep_info, files)
@@ -502,7 +502,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKM4.640180": {"run_prefix": "prefix2"},
                      "1.SKB3.640195": {"run_prefix": "prefix3"}}
         files = {'Unknown': ['/path/to/file1.fastq']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "Demultiplexed")
         obs_success, obs_ainfo, obs_error = _validate_demultiplexed(
             self.qclient, job_id, prep_info, files, out_dir)
@@ -517,7 +517,7 @@ class ValidateTests(PluginTestCase):
         # More than a single filepath type
         files = {'preprocessed_fastq': ['/path/to/file1.fastq',
                                         '/path/to/file2.fastq']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "Demultiplexed")
         obs_success, obs_ainfo, obs_error = _validate_demultiplexed(
             self.qclient, job_id, prep_info, files, out_dir)
@@ -531,7 +531,7 @@ class ValidateTests(PluginTestCase):
 
         # demux, fasta and fastq not provided
         files = {'log': ['/path/to/file1.log']}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "Demultiplexed")
         obs_success, obs_ainfo, obs_error = _validate_demultiplexed(
             self.qclient, job_id, prep_info, files, out_dir)
@@ -564,7 +564,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKB3.640195": {"run_prefix": "s3"},
                      "1.SKB6.640176": {"run_prefix": "s4"}}
         files = {'preprocessed_demux': demux_fp}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "Demultiplexed")
         obs_success, obs_ainfo, obs_error = _validate_demux_file(
             self.qclient, job_id, prep_info, out_dir, demux_fp)
@@ -592,7 +592,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKB3.640195": {"run_prefix": "s3"},
                      "1.SKB6.640176": {"run_prefix": "s4"}}
         files = {'preprocessed_fastq': [fastq_fp]}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "Demultiplexed")
         obs_success, obs_ainfo, obs_error = _validate_demultiplexed(
             self.qclient, job_id, prep_info, files, out_dir)
@@ -614,7 +614,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKB3.640195": {"not_a_run_prefix": "s3"},
                      "1.SKB6.640176": {"not_a_run_prefix": "s4"}}
         files = {'preprocessed_demux': [demux_fp]}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "Demultiplexed")
         obs_success, obs_ainfo, obs_error = _validate_demux_file(
             self.qclient, job_id, prep_info, out_dir, demux_fp)
@@ -641,7 +641,7 @@ class ValidateTests(PluginTestCase):
                      "1.SKM4.640180": {"not_a_run_prefix": "prefix2"},
                      "1.SKB3.640195": {"not_a_run_prefix": "prefix3"}}
         files = {'preprocessed_demux': [demux_fp]}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "Demultiplexed")
         obs_success, obs_ainfo, obs_error = _validate_demux_file(
             self.qclient, job_id, prep_info, out_dir, demux_fp)
@@ -658,7 +658,7 @@ class ValidateTests(PluginTestCase):
         prep_info = {"1.SKB2.640194": {"run_prefix": "prefix1"},
                      "1.SKM4.640180": {"run_prefix": "prefix2"},
                      "1.SKB3.640195": {"run_prefix": "prefix3"}}
-        job_id = self._create_template_and_job(
+        job_id, _ = self._create_template_and_job(
             prep_info, files, "Demultiplexed")
         obs_success, obs_ainfo, obs_error = _validate_demux_file(
             self.qclient, job_id, prep_info, out_dir, demux_fp)
@@ -695,6 +695,41 @@ class ValidateTests(PluginTestCase):
                          "'per_sample_FASTQ', 'FASTA_preprocessed', "
                          "'Demultiplexed'")
 
+    def test_validate_success(self):
+        test_dir = mkdtemp()
+        out_dir = mkdtemp()
+        self._clean_up_files.append(test_dir)
+        self._clean_up_files.append(out_dir)
+
+        copyfile(self.fastq, f'{test_dir}/prefix1.fastq')
+        copyfile(self.fastq, f'{test_dir}/prefix2.fastq')
+        copyfile(self.fastq, f'{test_dir}/prefix1_b.fastq')
+        copyfile(self.fastq, f'{test_dir}/prefix2_b.fastq')
+
+        prep_info = {
+            '1.SKB2.640194': {'run_prefix': 'prefix1'},
+            '1.SKM4.640180': {'run_prefix': 'prefix1'},
+            '1.SKB3.640195': {'run_prefix': 'prefix2'}}
+        files = {'raw_forward_seqs': [f'{test_dir}/prefix1.fastq',
+                                      f'{test_dir}/prefix2.fastq'],
+                 'raw_barcodes': [f'{test_dir}/prefix1_b.fastq',
+                                  f'{test_dir}/prefix2_b.fastq']}
+        atype = "FASTQ"
+        job_id, params = self._create_template_and_job(prep_info, files, atype)
+
+        obs_success, obs_ainfo, obs_error = validate(
+            self.qclient, job_id, params, out_dir)
+        self.assertEqual(obs_error, '')
+        self.assertTrue(obs_success)
+        self.assertEqual(len(obs_ainfo), 1)
+        exp_files = [
+            (f'{test_dir}/prefix1.fastq.gz', 'raw_forward_seqs'),
+            (f'{test_dir}/prefix2.fastq.gz', 'raw_forward_seqs'),
+            (f'{test_dir}/prefix1_b.fastq.gz', 'raw_barcodes'),
+            (f'{test_dir}/prefix2_b.fastq.gz', 'raw_barcodes'),
+            (f'{out_dir}/index.html', 'html_summary')]
+        self.assertCountEqual(obs_ainfo[0].files, exp_files)
+
     def test_validate_FASTA_preprocessed(self):
         prep_info = {"1.SKB2.640194": {"run_prefix": "s1"},
                      "1.SKM4.640180": {"run_prefix": "s2"},
@@ -709,7 +744,7 @@ class ValidateTests(PluginTestCase):
         self._clean_up_files.append(out_dir)
 
         atype = 'FASTA_preprocessed'
-        job_id = self._create_template_and_job(prep_info, files, atype)
+        job_id, _ = self._create_template_and_job(prep_info, files, atype)
         obs_success, obs_ainfo, obs_error = _validate_multiple(
             self.qclient, job_id, prep_info, files, atype, True)
         self.assertEqual(obs_error, "")

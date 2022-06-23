@@ -7,7 +7,7 @@
 # -----------------------------------------------------------------------------
 
 from hashlib import md5
-from os.path import basename, join
+from os.path import basename, join, dirname, exists
 from base64 import b64encode
 from io import BytesIO
 
@@ -22,6 +22,41 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt # noqa
 
 FILEPATH_TYPE_NO_FQTOOLS = ['SFF', 'FASTA_preprocessed']
+
+
+def _generate_html_summary(artifact_type, filepaths, out_dir):
+    """Helper method to generate html_summary
+
+    Parameters
+    ----------
+    artifact_type : str
+        The artifact_type to summarize
+    filepaths : [(str, str)]
+        A list of string pairs where the first element is the filepath and the
+        second is the filepath type
+    out_dir : str
+        The output folder
+
+    Returns
+    -------
+    str
+        The str representing the artifact html summary
+    """
+    # we have 2 main cases: Demultiplexed and everything else,
+    # splitting on those
+    if artifact_type == 'Demultiplexed':
+        artifact_information = '\n'.join(_summary_demultiplexed(
+            artifact_type, filepaths))
+        if artifact_information is None:
+            raise ValueError("We couldn't find a demux file in your artifact")
+    elif artifact_type == 'FASTA_preprocessed':
+        artifact_information = '\n'.join(_summary_FASTA_preprocessed(
+            artifact_type, filepaths, out_dir))
+    else:
+        artifact_information = _summary_not_demultiplexed(
+            artifact_type, filepaths)
+
+    return artifact_information
 
 
 def generate_html_summary(qclient, job_id, parameters, out_dir):
@@ -61,19 +96,8 @@ def generate_html_summary(qclient, job_id, parameters, out_dir):
     # 1.b get the artifact type_info
     artifact_type = artifact_info['type']
 
-    # we have 2 main cases: Demultiplexed and everything else,
-    # splitting on those
-    if artifact_type == 'Demultiplexed':
-        artifact_information = '\n'.join(_summary_demultiplexed(
-            artifact_type, filepaths))
-        if artifact_information is None:
-            raise ValueError("We couldn't find a demux file in your artifact")
-    elif artifact_type == 'FASTA_preprocessed':
-        artifact_information = '\n'.join(_summary_FASTA_preprocessed(
-            artifact_type, filepaths, out_dir))
-    else:
-        artifact_information = _summary_not_demultiplexed(
-            artifact_type, filepaths)
+    artifact_information = _generate_html_summary(
+        artifact_type, filepaths, out_dir)
 
     of_fp = join(out_dir, "artifact_%d.html" % artifact_id)
     with open(of_fp, 'w') as of:
@@ -110,13 +134,12 @@ def _summary_not_demultiplexed(artifact_type, filepaths):
     # loop over each of the fps/fps_type pairs
     artifact_information = []
     errors = []
-
+    df = None
     for fps_type, fps in sorted(filepaths.items()):
         # Step 2: generate HTML summary
         # md5, from http://stackoverflow.com/a/3431838
-        for fp in fps:
+        for i, fp in enumerate(fps):
             fn = basename(fp)
-
             with open(fp, "rb") as f:
                 hash_md5 = md5()
                 for chunk in iter(lambda: f.read(4096), b""):
@@ -125,12 +148,25 @@ def _summary_not_demultiplexed(artifact_type, filepaths):
                     'file_type': fps_type}
 
             if artifact_type not in FILEPATH_TYPE_NO_FQTOOLS:
-                cmd = f'fqtools count {fp}'
-                std_out, std_err, return_value = system_call(cmd)
-                if std_err or return_value != 0:
-                    errors.append(f'{fn}: {std_err}')
+                # check if the validate summary is present
+                if i == 0:
+                    fdata = f'{dirname(fp)}/qtp-sequencing-validate-data.csv'
+                    if exists(fdata):
+                        df = pd.read_csv(fdata, index_col=None)
+
+                if df is None:
+                    cmd = f'fqtools count {fp}'
+                    std_out, std_err, return_value = system_call(cmd)
+                    if std_err or return_value != 0:
+                        errors.append(f'{fn}: {std_err}')
+                    else:
+                        reads = int(std_out)
                 else:
-                    data['reads'] = int(std_out)
+                    reads = df[(df.filename == fn) &
+                               (df.file_type == fps_type)]
+                    # [0] there is only one value
+                    reads = reads.reads.values[0]
+                data['reads'] = reads
 
             artifact_information.append(data)
 
