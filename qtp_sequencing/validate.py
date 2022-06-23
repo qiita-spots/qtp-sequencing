@@ -6,17 +6,23 @@
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
 
-from os.path import basename, join, splitext, getsize
+from os.path import basename, join, splitext, getsize, dirname
 from os import remove
 from json import loads
 from shutil import copy
 from h5py import File
 from gzip import open as gopen
+from collections import defaultdict
 
 from qiita_client import ArtifactInfo
 from qiita_client.util import system_call
 from qiita_files.util import open_file
 from qiita_files.demux import to_hdf5, to_ascii_file
+
+import pandas as pd
+
+from .summary import FILEPATH_TYPE_NO_FQTOOLS, _generate_html_summary
+
 
 FILEPATH_TYPE_DICT = {
     'SFF': ({'raw_sff'}, set()),
@@ -192,6 +198,27 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype, test=False):
                 if error_msg is not None:
                     return False, None, error_msg
             filepaths.append((fp, fps_type))
+
+    # let's count sequences; this is basically the last check
+    errors = []
+    artifact_information = []
+    if atype not in FILEPATH_TYPE_NO_FQTOOLS:
+        for fp, fpt in filepaths:
+            cmd = f'fqtools count {fp}'
+            std_out, std_err, return_value = system_call(cmd)
+            fn = basename(fp)
+            if std_err or return_value != 0:
+                errors.append(f'{fn}: {std_err}')
+            else:
+                reads = int(std_out)
+                artifact_information.append(
+                    {'filename': fn, 'reads': reads, 'file_type': fpt})
+
+        if errors:
+            raise ValueError('Found errors: \n %s' % ''.join(errors))
+        dname = dirname(fp)
+        pd.DataFrame(artifact_information).to_csv(
+            f'{dname}/qtp-sequencing-validate-data.csv', index=False)
 
     return True, [ArtifactInfo(None, atype, filepaths)], ""
 
@@ -568,14 +595,33 @@ def validate(qclient, job_id, parameters, out_dir):
 
     _vm = ['SFF', 'FASTQ', 'FASTA', 'FASTA_Sanger', 'FASTA_preprocessed']
     if a_type in _vm:
-        return _validate_multiple(qclient, job_id, prep_info, files, a_type)
+        reply = _validate_multiple(qclient, job_id, prep_info, files, a_type)
     elif a_type == 'per_sample_FASTQ':
-        return _validate_per_sample_FASTQ(qclient, job_id, prep_info, files)
+        reply = _validate_per_sample_FASTQ(qclient, job_id, prep_info, files)
     elif a_type == 'Demultiplexed':
-        return _validate_demultiplexed(qclient, job_id, prep_info, files,
-                                       out_dir)
+        reply = _validate_demultiplexed(qclient, job_id, prep_info, files,
+                                        out_dir)
     else:
         error_msg = ("Unknown artifact_type %s. Supported types: 'SFF', "
                      "'FASTQ', 'FASTA', 'FASTA_Sanger', 'per_sample_FASTQ', "
                      "'FASTA_preprocessed', 'Demultiplexed'" % a_type)
         return False, None, error_msg
+
+    status, artifacts, error_msg = reply
+    if not status:
+        return reply
+
+    # generating html summary
+    files = defaultdict(list)
+    # artifacts[0].files: there is only one artifact
+    for fp, fpt in artifacts[0].files:
+        files[fpt].append(fp)
+    artifact_information = _generate_html_summary(a_type, files, out_dir)
+    summary_fp = f'{out_dir}/index.html'
+    with open(summary_fp, 'w') as fp:
+        fp.write(artifact_information)
+
+    # inserting the summary into the artifact
+    artifacts[0].files.append((summary_fp, 'html_summary'))
+
+    return status, artifacts, error_msg
