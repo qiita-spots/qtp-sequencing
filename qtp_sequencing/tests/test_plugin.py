@@ -43,7 +43,7 @@ class PluginTests(PluginTestCase):
 
     def test_plugin_summary(self):
         artifact_id = 1
-        data = {'command': dumps(['Sequencing Data Type', '2021.05',
+        data = {'command': dumps(['Sequencing Data Type', '2021.07',
                                   'Generate HTML summary']),
                 'parameters': dumps({'input_data': artifact_id}),
                 'status': 'running'}
@@ -91,7 +91,7 @@ class PluginTests(PluginTestCase):
                       'artifact_type': atype}
 
         data = {'command': dumps(
-            ['Sequencing Data Type', '2021.05', 'Validate']),
+            ['Sequencing Data Type', '2021.07', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
@@ -108,7 +108,7 @@ class PluginTests(PluginTestCase):
                       'files': dumps({'log': ['/path/to/file1.log']}),
                       'artifact_type': "Demultiplexed"}
         data = {'command': dumps(
-            ['Sequencing Data Type', '2021.05', 'Validate']),
+            ['Sequencing Data Type', '2021.07', 'Validate']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
         job_id = self.qclient.post(
