@@ -39,7 +39,7 @@ class SummaryTestsNotDemux(PluginTestCase):
         # Create a job in Qiita
         artifact_id = 1
         parameters = {'input_data': artifact_id}
-        data = {'command': dumps(['Sequencing Data Type', '2021.07',
+        data = {'command': dumps(['Sequencing Data Type', '2022.07',
                                   'Generate HTML summary']),
                 'parameters': dumps(parameters),
                 'status': 'running'}
@@ -81,7 +81,7 @@ class SummaryTestsNotDemux(PluginTestCase):
     def test_generate_html_summary_demux(self):
         artifact_id = 2
         parameters = {'input_data': artifact_id}
-        data = {'command': dumps(['Sequencing Data Type', '2021.07',
+        data = {'command': dumps(['Sequencing Data Type', '2022.07',
                                   'Generate HTML summary']),
                 'parameters': dumps(parameters),
                 'stuatus': 'running'}
