@@ -19,8 +19,8 @@ artifact_types = [
     QiitaArtifactType('SFF', 'Raw SFF files', False, False, True,
                       [('raw_sff', True)]),
     QiitaArtifactType('FASTA_Sanger', 'Raw fasta files from Sanger sequencing',
-                      False, False, False, [
-                      ('raw_fasta', True), ('log', False)]),
+                      False, False, False, [('raw_fasta', True),
+                                            ('log', False)]),
     QiitaArtifactType('FASTQ', 'Raw fastq files, with or without paired ends',
                       False, False, True, [('raw_forward_seqs', True),
                                            ('raw_reverse_seqs', False),
