@@ -84,7 +84,7 @@ def _gzip_file(filepath, test=False):
 
 
 def _validate_multiple(qclient, job_id, prep_info, files, atype, test=False):
-    """Validate and fix a new 'SFF', 'FASTQ', 'FASTA' or 'FASTA_Sanger' artifact
+    """Validate and fix 'SFF', 'FASTQ', 'FASTA' or 'FASTA_Sanger' artifacts
 
     Parameters
     ----------
