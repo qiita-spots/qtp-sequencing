@@ -136,7 +136,7 @@ def _summary_not_demultiplexed(artifact_type, filepaths):
     errors = []
     df = None
     for fps_type, fps in sorted(filepaths.items()):
-        if fps_type in {'html_summary'}:
+        if fps_type in {'html_summary', 'log'}:
             continue
         # Step 2: generate HTML summary
         # md5, from http://stackoverflow.com/a/3431838
