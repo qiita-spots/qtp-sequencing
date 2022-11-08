@@ -253,7 +253,8 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files, test=False):
     # Check if there is any filepath type that is not supported
     unsupported_fp_types = set(files) - {'raw_forward_seqs',
                                          'raw_reverse_seqs',
-                                         'preprocessed_fastq'}
+                                         'preprocessed_fastq',
+                                         'log'}
     if unsupported_fp_types:
         error_msg = ("Filepath type(s) %s not supported by artifact "
                      "type per_sample_FASTQ. Supported filepath types: "
