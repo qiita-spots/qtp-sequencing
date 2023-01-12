@@ -99,7 +99,8 @@ def generate_html_summary(qclient, job_id, parameters, out_dir):
     artifact_info = qclient.get(qclient_url)
 
     # 1a. getting the file paths
-    filepaths = [x['filepath'] for x in artifact_info['files']]
+    filepaths = {k: [vv['filepath'] for vv in v]
+                 for k, v in artifact_info['files'].items()}
     # 1.b get the artifact type_info
     artifact_type = artifact_info['type']
 
