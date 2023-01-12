@@ -51,11 +51,11 @@ class SummaryTestsNotDemux(PluginTestCase):
         files = self.qclient.get(
             '/qiita_db/artifacts/%s/' % artifact_id)['files']
 
-        bcds_fp = files['raw_barcodes'][0]
+        bcds_fp = files['raw_barcodes'][0]['filepath']
         self._clean_up_files.append(bcds_fp)
         with GzipFile(bcds_fp, mode='w', mtime=1) as fh:
             fh.write(BARCODES.encode())
-        fwd_fp = files['raw_forward_seqs'][0]
+        fwd_fp = files['raw_forward_seqs'][0]['filepath']
         self._clean_up_files.append(fwd_fp)
         with GzipFile(fwd_fp, mode='w', mtime=1) as fh:
             fh.write(READS.encode())
@@ -71,7 +71,7 @@ class SummaryTestsNotDemux(PluginTestCase):
 
         # asserting content of html
         res = self.qclient.get("/qiita_db/artifacts/%s/" % artifact_id)
-        html_fp = res['files']['html_summary'][0]
+        html_fp = res['files']['html_summary'][0]['filepath']
         self._clean_up_files.append(html_fp)
         with open(html_fp) as html_f:
             html = html_f.read()
@@ -92,7 +92,7 @@ class SummaryTestsNotDemux(PluginTestCase):
         # files fo not exist create them
         files = self.qclient.get(
             '/qiita_db/artifacts/%s/' % artifact_id)['files']
-        demux_fp = files['preprocessed_demux'][0]
+        demux_fp = files['preprocessed_demux'][0]['filepath']
         copyfile(join(dirname(__file__), 'test_data', '101_seqs.demux'),
                  demux_fp)
         self._clean_up_files.append(demux_fp)
@@ -107,7 +107,7 @@ class SummaryTestsNotDemux(PluginTestCase):
 
         # asserting content of html
         res = self.qclient.get("/qiita_db/artifacts/%s/" % artifact_id)
-        html_fp = res['files']['html_summary'][0]
+        html_fp = res['files']['html_summary'][0]['filepath']
         self._clean_up_files.append(html_fp)
 
         with open(html_fp) as html_f:

@@ -54,11 +54,11 @@ class PluginTests(PluginTestCase):
         files = self.qclient.get(
             '/qiita_db/artifacts/%s/' % artifact_id)['files']
 
-        bcds_fp = files['raw_barcodes'][0]
+        bcds_fp = files['raw_barcodes'][0]['filepath']
         self._clean_up_files.append(bcds_fp)
         with GzipFile(bcds_fp, mode='w', mtime=1) as fh:
             fh.write(BARCODES.encode())
-        fwd_fp = files['raw_forward_seqs'][0]
+        fwd_fp = files['raw_forward_seqs'][0]['filepath']
         self._clean_up_files.append(fwd_fp)
         with GzipFile(fwd_fp, mode='w', mtime=1) as fh:
             fh.write(READS.encode())
