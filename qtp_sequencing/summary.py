@@ -88,11 +88,19 @@ def generate_html_summary(qclient, job_id, parameters, out_dir):
     """
     # Step 1: gather file information from qiita using REST api
     artifact_id = parameters['input_data']
+    # we are going to use the "raw" code for retrieving artifact_info vs. the
+    # qiita_client.artifact_and_preparation_files method because fqtools
+    # returns 0 (vs. failing, which is nice) on an empty file
+    # $ touch x.fastq
+    # $ gzip x.fastq
+    # $ fqtools count x.fastq.gz
+    # 0
     qclient_url = "/qiita_db/artifacts/%s/" % artifact_id
     artifact_info = qclient.get(qclient_url)
 
     # 1a. getting the file paths
-    filepaths = artifact_info['files']
+    filepaths = {k: [vv['filepath'] for vv in v]
+                 for k, v in artifact_info['files'].items()}
     # 1.b get the artifact type_info
     artifact_type = artifact_info['type']
 
