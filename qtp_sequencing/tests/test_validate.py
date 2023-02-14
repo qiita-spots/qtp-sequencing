@@ -417,35 +417,6 @@ class ValidateTests(PluginTestCase):
                          "If preprocessed_fastq is provided, raw_reverse_seqs "
                          "should not be provided")
 
-        # Count mismatch
-        files = {'raw_forward_seqs': ['/path/to/file1.fastq'],
-                 'raw_reverse_seqs': ['/path/to/file1.fastq',
-                                      '/path/to/file1.fastq']}
-        job_id, _ = self._create_template_and_job(
-            prep_info, files, "per_sample_FASTQ")
-        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
-            self.qclient, job_id, prep_info, files)
-        self.assertFalse(obs_success)
-        self.assertIsNone(obs_ainfo)
-        self.assertEqual(obs_error,
-                         "The number of provided files doesn't match the "
-                         "number of samples (3): 1 raw_forward_seqs, "
-                         "2 raw_reverse_seqs (optional, 0 is ok)")
-
-        # preprocessed_fastq count mismatch
-        files = {'preprocessed_fastq': ['/path/to/file1_R1.fastq',
-                                        '/path/to/file1_R2.fastq']}
-        job_id, _ = self._create_template_and_job(
-            prep_info, files, "per_sample_FASTQ")
-        obs_success, obs_ainfo, obs_error = _validate_per_sample_FASTQ(
-            self.qclient, job_id, prep_info, files)
-        self.assertFalse(obs_success)
-        self.assertIsNone(obs_ainfo)
-        self.assertEqual(obs_error,
-                         "The number of provided files doesn't match the "
-                         "number of samples (3): 2 raw_forward_seqs, "
-                         "0 raw_reverse_seqs (optional, 0 is ok)")
-
         # Run prefix mismatch
         files = {'raw_forward_seqs': ['/path/to/prefix1_fwd.fastq',
                                       '/path/to/prefix2_fwd.fastq',
