@@ -90,3 +90,6 @@ ENV/
 
 # redis
 dump.rdb
+
+# tests
+qtp_sequencing/tests/test_data/
