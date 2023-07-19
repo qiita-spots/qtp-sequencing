@@ -7,6 +7,7 @@
 # -----------------------------------------------------------------------------
 
 from hashlib import md5
+from os import remove
 from os.path import basename, join, dirname, exists
 from base64 import b64encode
 from io import BytesIO
@@ -163,6 +164,7 @@ def _summary_not_demultiplexed(artifact_type, filepaths):
                     fdata = f'{dirname(fp)}/qtp-sequencing-validate-data.csv'
                     if exists(fdata):
                         df = pd.read_csv(fdata, index_col=None)
+                        remove(fdata)
 
                 if df is None:
                     cmd = f'fqtools count {fp}'
