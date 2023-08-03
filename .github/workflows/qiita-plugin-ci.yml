@@ -80,7 +80,7 @@ jobs:
           conda create -q --yes -n qtp-sequencing python=3.9 pip pigz quast fqtools
           conda activate qtp-sequencing
 
-          export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/server.crt
+          export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/ci_rootca.crt
           export QIITA_CONFIG_FP=`pwd`/qiita-dev/qiita_core/support_files/config_test_local.cfg
           pip install -U pip
           pip install .
@@ -90,7 +90,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda activate qiita
-          export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/server.crt
+          export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/ci_rootca.crt
           export QIITA_CONFIG_FP=`pwd`/qiita-dev/qiita_core/support_files/config_test_local.cfg
           sed "s#/home/runner/work/qiita/qiita#${PWD}/qiita-dev/#g" `pwd`/qiita-dev/qiita_core/support_files/config_test.cfg > ${QIITA_CONFIG_FP}
 
@@ -123,7 +123,7 @@ jobs:
           COVER_PACKAGE: ${{ matrix.cover_package }}
         run: |
           conda activate qtp-sequencing
-          export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/server.crt
+          export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/ci_rootca.crt
           export QIITA_CONFIG_FP=`pwd`/qiita-dev/qiita_core/support_files/config_test_local.cfg
 
           nosetests --with-doctest --with-coverage -v --cover-package=qtp_sequencing
