@@ -2,7 +2,7 @@
 
 on:
   push:
-    branches: [ dev ]
+    branches: [dev]
   pull_request:
 
 jobs:
@@ -70,7 +70,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda activate qiita
-          pip install qiita-dev/ --no-binary redbiom
+          pip --quiet install qiita-dev/ --no-binary redbiom
           mkdir ~/.qiita_plugins
 
       - name: Install plugins
@@ -80,17 +80,17 @@ jobs:
           conda create -q --yes -n qtp-sequencing python=3.9 pip pigz quast fqtools
           conda activate qtp-sequencing
 
-          export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/ci_rootca.crt
+          export QIITA_ROOTCA_CERT=`pwd`/qiita-dev/qiita_core/support_files/ci_rootca.crt
           export QIITA_CONFIG_FP=`pwd`/qiita-dev/qiita_core/support_files/config_test_local.cfg
           pip install -U pip
           pip install .
-          configure_qtp_sequencing --env-script "source /home/runner/.profile; conda activate qtp-sequencing" --server-cert $QIITA_SERVER_CERT
+          configure_qtp_sequencing --env-script "source /home/runner/.profile; conda activate qtp-sequencing" --ca-cert $QIITA_ROOTCA_CERT
 
       - name: Starting services
         shell: bash -l {0}
         run: |
           conda activate qiita
-          export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/ci_rootca.crt
+          export QIITA_ROOTCA_CERT=`pwd`/qiita-dev/qiita_core/support_files/ci_rootca.crt
           export QIITA_CONFIG_FP=`pwd`/qiita-dev/qiita_core/support_files/config_test_local.cfg
           sed "s#/home/runner/work/qiita/qiita#${PWD}/qiita-dev/#g" `pwd`/qiita-dev/qiita_core/support_files/config_test.cfg > ${QIITA_CONFIG_FP}
 
@@ -123,7 +123,7 @@ jobs:
           COVER_PACKAGE: ${{ matrix.cover_package }}
         run: |
           conda activate qtp-sequencing
-          export QIITA_SERVER_CERT=`pwd`/qiita-dev/qiita_core/support_files/ci_rootca.crt
+          export QIITA_ROOTCA_CERT=`pwd`/qiita-dev/qiita_core/support_files/ci_rootca.crt
           export QIITA_CONFIG_FP=`pwd`/qiita-dev/qiita_core/support_files/config_test_local.cfg
 
           nosetests --with-doctest --with-coverage -v --cover-package=qtp_sequencing
@@ -135,21 +135,21 @@ jobs:
 
       - uses: codecov/codecov-action@v1
         with:
-         token: ${{ secrets.CODECOV_TOKEN }}
-         file: codecov.yml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: codecov.yml
 
   lint:
     runs-on: ubuntu-latest
     steps:
-    - name: flake8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-    - name: install dependencies
-      run: python -m pip install --upgrade pip
-    - name: Check out repository code
-      uses: actions/checkout@v2
-    - name: lint
-      run: |
-        pip install -q flake8
-        flake8 qtp_sequencing setup.py scripts/*
+      - name: flake8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: install dependencies
+        run: python -m pip install --upgrade pip
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: lint
+        run: |
+          pip install -q flake8
+          flake8 qtp_sequencing setup.py scripts/*
