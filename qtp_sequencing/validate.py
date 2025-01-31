@@ -152,10 +152,12 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype, test=False):
                         fps.append(bn)
                 if fps:
                     # let's check by sample_name
+                    fps_rp = fps
                     rps, fps = [], []
                     for fp in t_files:
                         bn = basename(fp)
-                        found = [sn for sn in sample_names if bn.startswith(sn)]
+                        found = [sn for sn in sample_names
+                                 if bn.startswith(sn)]
                         if found:
                             rps.extend(found)
                         else:
@@ -163,7 +165,8 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype, test=False):
                     if fps:
                         offending[ftype] = (
                             "The provided files do not match the run prefix "
-                            "values in the prep information: %s" % ', '.join(fps))
+                            "values in the prep information: %s" % ', '.join(
+                                fps_rp))
                 else:
                     rps = run_prefixes - set(rps)
                     if rps:
