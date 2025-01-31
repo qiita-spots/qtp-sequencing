@@ -728,6 +728,33 @@ class ValidateTests(PluginTestCase):
         exp = [ArtifactInfo(None, atype, files)]
         self.assertEqual(obs_ainfo, exp)
 
+    def test_validate_FASTA_preprocessed_samplename(self):
+        prep_info = {"1.SKB2.640194": {"run_prefix": "s1"},
+                     "1.SKM4.640180": {"run_prefix": "s2"},
+                     "1.SKB3.640195": {"run_prefix": "s3"},
+                     "1.SKB6.640176": {"run_prefix": "s4"}}
+
+        files = {'preprocessed_fasta': [
+            '/path/to/1.SKB2.640194.fna', '/path/to/1.SKM4.640180.fna',
+            '/path/to/1.SKB3.640195.fna', '/path/to/1.SKB6.640176.fna']}
+
+        out_dir = mkdtemp()
+        self._clean_up_files.append(out_dir)
+
+        atype = 'FASTA_preprocessed'
+        job_id, _ = self._create_template_and_job(prep_info, files, atype)
+        obs_success, obs_ainfo, obs_error = _validate_multiple(
+            self.qclient, job_id, prep_info, files, atype, True)
+        self.assertEqual(obs_error, "")
+        self.assertTrue(obs_success)
+
+        files = [('/path/to/1.SKB2.640194.fna.gz', 'preprocessed_fasta'),
+                 ('/path/to/1.SKM4.640180.fna.gz', 'preprocessed_fasta'),
+                 ('/path/to/1.SKB3.640195.fna.gz', 'preprocessed_fasta'),
+                 ('/path/to/1.SKB6.640176.fna.gz', 'preprocessed_fasta')]
+        exp = [ArtifactInfo(None, atype, files)]
+        self.assertEqual(obs_ainfo, exp)
+
 
 FASTQ_SEQS = """@{s1}_1 orig_bc=abc new_bc=abc bc_diffs=0
 xyz
