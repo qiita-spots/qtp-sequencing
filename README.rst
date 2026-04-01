@@ -1,6 +1,6 @@
 Sequencing Data Type Plugin
 ===========================
-
+ 
 |Build Status|
 
 Qiita (canonically pronounced *cheetah*) is an analysis environment for microbiome (and other "comparative -omics") datasets.
