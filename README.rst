@@ -1,5 +1,5 @@
 Sequencing Data Type Plugin
-===========================
+=========================== 
 
 |Build Status|
 
