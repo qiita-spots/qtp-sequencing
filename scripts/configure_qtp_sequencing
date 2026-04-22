@@ -17,12 +17,13 @@ from qtp_sequencing import plugin
 @click.option('--env-script', prompt='Environment script',
               default='conda activate qtp-sequencing')
 @click.option('--ca-cert', prompt='Server certificate', default='None')
-def config(env_script, ca_cert):
+@click.argument('plugincoupling', required=False, default='filesystem')
+def config(env_script, ca_cert, plugincoupling):
     """Generates the Qiita configuration files"""
     if ca_cert == 'None':
         ca_cert = None
     plugin.generate_config(env_script, 'start_qtp_sequencing',
-                           ca_cert)
+                           ca_cert, plugin_coupling=plugincoupling)
 
 
 if __name__ == '__main__':

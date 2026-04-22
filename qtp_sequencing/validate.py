@@ -6,7 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # -----------------------------------------------------------------------------
 
-from os.path import basename, join, splitext, getsize, dirname
+from os.path import basename, join, splitext, getsize, dirname, exists
 from os import remove
 from json import loads
 from shutil import copy
@@ -39,11 +39,13 @@ MUST_GZ = {
     'preprocessed_fastq', 'preprocessed_fasta'}
 
 
-def _gzip_file(filepath, test=False):
+def _gzip_file(qclient, filepath, test=False):
     """gzip the given filepath if needed
 
     Parameters
     ----------
+    qclient : qiita_client.QiitaClient
+        The Qiita server client
     filepath : string
         The filepath to verify or compress
     test : bolean
@@ -62,6 +64,8 @@ def _gzip_file(filepath, test=False):
         return_fp = '%s.gz' % filepath
     else:
         is_gzip = False
+        if not exists(filepath):
+            qclient.fetch_file_from_central(filepath)
         try:
             with gopen(filepath, 'rb') as f:
                 f.read(1)
@@ -77,9 +81,14 @@ def _gzip_file(filepath, test=False):
                 error = ("Std out: %s\nStd err: %s\n\nCommand run was:\n%s"
                          % (std_out, std_err, gz_cmd))
             else:
-                # removing non gz file
-                remove(filepath)
-                return_fp = '%s.gz' % filepath
+                # As of 2025-11-13, this is not done when using https plugin
+                # coupling, as I hesitate to expose endpoints which allow
+                # deletion of files. Users might see uncompressed left overs in
+                # their download sections therefore.
+                if qclient._plugincoupling == 'filesystem':
+                    remove(filepath)
+
+                return_fp = qclient.push_file_to_central('%s.gz' % filepath)
     return return_fp, error
 
 
@@ -208,7 +217,7 @@ def _validate_multiple(qclient, job_id, prep_info, files, atype, test=False):
     for fps_type, fps in files.items():
         for fp in fps:
             if fps_type in MUST_GZ:
-                fp, error_msg = _gzip_file(fp, test)
+                fp, error_msg = _gzip_file(qclient, fp, test)
                 if error_msg is not None:
                     return False, None, error_msg
             filepaths.append((fp, fps_type))
@@ -292,7 +301,7 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files, test=False):
                      "preprocessed_fastq")
         return False, None, error_msg
 
-    # Make sure that we hve the same number of files than samples
+    # Make sure that we have the same number of files than samples
     if 'raw_reverse_seqs' in files:
         rev_count = len(files['raw_reverse_seqs'])
     else:
@@ -355,7 +364,7 @@ def _validate_per_sample_FASTQ(qclient, job_id, prep_info, files, test=False):
                 empty_files.append(basename(fp))
 
             if fps_type in MUST_GZ:
-                fp, error_msg = _gzip_file(fp, test)
+                fp, error_msg = _gzip_file(qclient, fp, test)
                 if error_msg is not None:
                     return False, None, error_msg
 
@@ -457,14 +466,14 @@ def _validate_demux_file(qclient, job_id, prep_info, out_dir, demux_fp,
     if not fastq_fp:
         fastq_fp = join(out_dir, "%s.fastq" % name)
         to_ascii_file(demux_fp, fastq_fp, out_format='fastq')
-        fastq_fp, error_msg = _gzip_file(fastq_fp)
+        fastq_fp, error_msg = _gzip_file(qclient, fastq_fp)
         if error_msg is not None:
             return False, None, error_msg
 
     if not fasta_fp:
         fasta_fp = join(out_dir, "%s.fasta" % name)
         to_ascii_file(demux_fp, fasta_fp, out_format='fasta')
-        fasta_fp, error_msg = _gzip_file(fasta_fp)
+        fasta_fp, error_msg = _gzip_file(qclient, fasta_fp)
         if error_msg is not None:
             return False, None, error_msg
 
